@@ -1,0 +1,30 @@
+{
+  "name": "dapp-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --filter webapp dev",
+    "build": "pnpm -r build",
+    "build:webapp": "pnpm --filter webapp build",
+    "build:contracts": "pnpm --filter contracts build",
+    "start": "pnpm --filter webapp start",
+    "lint": "pnpm -r lint",
+    "prettier": "prettier --check .",
+    "prettier:fix": "prettier --write .",
+    "test": "pnpm -r test",
+    "test:contracts": "pnpm --filter contracts test",
+    "deploy:contracts": "pnpm --filter contracts deploy",
+    "clear-tables": "node packages/webapp/scripts/clear-database-tables.js"
+  },
+  "prettier": {
+    "plugins": [
+      "prettier-plugin-tailwindcss"
+    ],
+    "tailwindStylesheet": "packages/webapp/app/globals.css"
+  },
+  "devDependencies": {
+    "prettier": "^3.6.2",
+    "prettier-plugin-tailwindcss": "^0.6.14",
+    "typescript": "^5"
+  }
+}

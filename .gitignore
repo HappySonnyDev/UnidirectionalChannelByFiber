@@ -1,0 +1,68 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/packages/*/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+/packages/webapp/.next/
+/packages/webapp/out/
+node_modules
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+.env*
+!.env.example
+packages/*/.env.local
+packages/*/.env
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+/packages/*/dist
+/packages/*/build
+
+# database files
+*.sqlite
+*.sqlite3
+*.db
+*.sqlite-shm
+*.sqlite-wal
+*.db-shm
+*.db-wal
+# SQLite database files in webapp
+packages/webapp/database.sqlite
+packages/webapp/database.sqlite3
+packages/webapp/database.sqlite-shm
+packages/webapp/database.sqlite-wal
+packages/webapp/database.db
+
+# contracts build output
+/packages/contracts/dist/
+/packages/contracts/*.bc

@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useAuth } from '@/features/auth/components/auth-context';
 import { usePaymentTransaction, PaymentTransactionData } from '@/features/payment/hooks/use-payment-transaction';
-import { jsonStr } from '@/lib/shared/ckb';
+import { jsonStr } from '@/lib/shared/utils';
 
 interface ChunkPaymentResult {
   success: boolean;

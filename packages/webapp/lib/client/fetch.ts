@@ -1,8 +1,21 @@
 /**
  * Enhanced fetch wrapper with automatic error handling and response parsing
+ * Automatically includes X-CKB-Address header when available.
  */
 
-import { jsonStr } from "@/lib/shared/ckb";
+import { jsonStr } from "@/lib/shared/utils";
+
+/** localStorage key for the current user's CKB address */
+const CKB_ADDRESS_KEY = 'dapp2-ckb-address';
+
+/** Get the stored CKB address for request headers */
+function getCkbAddressHeader(): Record<string, string> {
+  if (typeof window === 'undefined') return {};
+  const address = localStorage.getItem(CKB_ADDRESS_KEY);
+  console.log('[fetch] getCkbAddressHeader:', address ? address.slice(0, 20) + '...' : 'NULL');
+  if (!address) return {};
+  return { 'X-CKB-Address': address };
+}
 
 export class APIError extends Error {
   constructor(
@@ -26,12 +39,23 @@ interface FetchOptions extends RequestInit {
  * @returns Parsed response data
  */
 export async function apiFetch<T = unknown>(url: string, options: FetchOptions = {}): Promise<T> {
+  // Guard: don't call protected APIs without CKB address
+  const ckbHeaders = getCkbAddressHeader();
+  const isProtectedApi = url.startsWith('/api/') && !url.startsWith('/api/auth/');
+  console.log('[apiFetch]', url, '| hasAddress:', !!ckbHeaders['X-CKB-Address'], '| isProtected:', isProtectedApi);
+  if (isProtectedApi && !ckbHeaders['X-CKB-Address']) {
+    throw new APIError('Not authenticated', 401, {} as Response);
+  }
+
+  const { headers: optionHeaders, ...restOptions } = options;
+
   const config: RequestInit = {
+    ...restOptions,
     headers: {
       'Content-Type': 'application/json',
-      ...options.headers,
+      ...ckbHeaders,
+      ...optionHeaders,
     },
-    ...options,
   };
 
   try {

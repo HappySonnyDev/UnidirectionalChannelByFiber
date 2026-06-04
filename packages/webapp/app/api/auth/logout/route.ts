@@ -1,32 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { AuthService, clearAuthCookie } from '@/lib/server/auth';
+import { NextResponse } from 'next/server';
 
-export async function POST(request: NextRequest) {
-  try {
-    const token = request.cookies.get('auth-token')?.value;
-    
-    if (token) {
-      const authService = new AuthService();
-      await authService.logout(token);
-    }
-
-    const response = NextResponse.json({
-      message: 'Logout successful'
-    });
-
-    // Clear authentication cookie
-    response.headers.set('Set-Cookie', clearAuthCookie());
-
-    return response;
-
-  } catch {
-    const response = NextResponse.json(
-      { error: 'Logout failed' },
-      { status: 500 }
-    );
-
-    // Clear cookie anyway
-    response.headers.set('Set-Cookie', clearAuthCookie());
-    return response;
-  }
+export async function POST() {
+  // No cookie to clear – auth is via X-CKB-Address header only.
+  // Client-side cleanup (localStorage, Fiber node disconnect) is
+  // handled by the auth-context logout callback.
+  return NextResponse.json({ message: 'OK' });
 }

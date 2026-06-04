@@ -1,18 +1,34 @@
+/**
+ * Payment types for Fiber invoice-based payment flow.
+ *
+ * Old model: CKB Spilman payment channels with token-based accounting
+ * New model: Fiber invoice payments in shannon (1 CKB = 100_000_000 shannon)
+ */
+
 export interface PaymentRecord {
-  chunkId: string;
-  tokens: number;
-  consumedTokens: number; // Cumulative tokens consumed (converted from CKB)
-  remainingTokens: number; // Remaining tokens in channel (converted from CKB)
+  /** Unique chunk index in the conversation */
+  chunkIndex: number;
+  /** Invoice string from the Fiber node */
+  invoice: string;
+  /** Payment hash for tracking */
+  payment_hash: string;
+  /** Amount in shannon */
+  amount: string;
+  /** Payment status */
+  status: 'pending' | 'paying' | 'confirmed' | 'failed';
+  /** ISO timestamp */
   timestamp: string;
-  isPaid?: boolean; // Track payment status
-  isPaying?: boolean; // Track loading state
-  transactionData?: Record<string, unknown>;
+  /** Error message if failed */
+  error?: string;
 }
 
 export interface PaymentChannelInfo {
-  consumedTokens: number;
-  remainingTokens: number;
-  channelId: string;
-  channelTotalTokens: number;
-  currentChunkTokens: number;
+  /** Available balance in human-readable format (e.g. "1.500000 CKB") */
+  availableBalance: string;
+  /** Total amount paid in shannon across all confirmed payments */
+  totalPaidShannon: string;
+  /** Number of confirmed payments */
+  confirmedCount: number;
+  /** Number of failed payments */
+  failedCount: number;
 }

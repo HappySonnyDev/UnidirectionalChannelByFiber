@@ -26,20 +26,16 @@ class CronManager {
   }
 
   private initializeTasks() {
-    // Define available tasks
+    // Only keep the check-expired-channels task (simplified for Fiber).
+    // The auto-settle-expiring task has been removed because Fiber
+    // channels close/settle automatically via the fnn node.
     const taskConfigs: TaskConfig[] = [
       {
-        name: 'auto-settle-expiring',
-        description: 'Auto-settle payment channels expiring within 15 minutes',
-        schedule: '* * * * *', // Every minute
-        taskFunction: this.autoSettleTask.bind(this)
-      },
-      {
         name: 'check-expired-channels',
-        description: 'Check and expire payment channels that have passed their duration',
+        description: 'Check and close payment channels that are no longer active on the Fiber node',
         schedule: '*/10 * * * *', // Every 10 minutes
-        taskFunction: this.checkExpiredChannelsTask.bind(this)
-      }
+        taskFunction: this.checkExpiredChannelsTask.bind(this),
+      },
     ];
 
     // Register task configs but don't start them
@@ -48,65 +44,22 @@ class CronManager {
     });
   }
 
-  private async autoSettleTask(): Promise<void> {
-    try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 
-                    process.env.NODE_ENV === 'production' 
-                      ? 'https://your-domain.com' 
-                      : 'http://localhost:3000';
-      
-      const portsToTry = [3000, 3001, 3002];
-      let lastError: Error | null = null;
-      
-      for (const port of portsToTry) {
-        try {
-          const url = apiUrl.includes('localhost') 
-            ? `http://localhost:${port}/api/admin/auto-settle-expiring`
-            : `${apiUrl}/api/admin/auto-settle-expiring`;
-          
-          const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          });
-
-          if (response.ok) {
-            const result = await response.json();
-            console.log('[CRON] Auto-settlement completed:', result.settledCount, '/', result.checkedCount);
-            return;
-          } else {
-            lastError = new Error(`HTTP ${response.status}`);
-          }
-        } catch (error) {
-          lastError = error instanceof Error ? error : new Error(String(error));
-        }
-      }
-      
-      throw lastError || new Error('All API endpoints failed');
-      
-    } catch (error) {
-      console.error('[CRON] Auto-settlement error:', error);
-      throw error;
-    }
-  }
-
   private async checkExpiredChannelsTask(): Promise<void> {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 
-                    process.env.NODE_ENV === 'production' 
-                      ? 'https://your-domain.com' 
-                      : 'http://localhost:3000';
-      
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ||
+        process.env.NODE_ENV === 'production'
+          ? 'https://your-domain.com'
+          : 'http://localhost:3000';
+
       const portsToTry = [3000, 3001, 3002];
       let lastError: Error | null = null;
-      
+
       for (const port of portsToTry) {
         try {
-          const url = apiUrl.includes('localhost') 
+          const url = apiUrl.includes('localhost')
             ? `http://localhost:${port}/api/admin/check-expired-channels`
             : `${apiUrl}/api/admin/check-expired-channels`;
-          
+
           const response = await fetch(url, {
             method: 'POST',
             headers: {
@@ -125,9 +78,9 @@ class CronManager {
           lastError = error instanceof Error ? error : new Error(String(error));
         }
       }
-      
+
       throw lastError || new Error('All API endpoints failed');
-      
+
     } catch (error) {
       console.error('[CRON] Check expired channels error:', error);
       throw error;
@@ -152,9 +105,9 @@ class CronManager {
         await existingTask.stop();
       }
 
-      // Create new task (will be started manually)
+      // Create new task
       const task = cron.schedule(config.schedule, config.taskFunction, {
-        timezone: 'Asia/Shanghai'
+        timezone: 'Asia/Shanghai',
       });
 
       this.tasks.set(taskName, task);
@@ -163,11 +116,11 @@ class CronManager {
       return { success: true, message: `Task ${taskName} started successfully` };
 
     } catch (error) {
-      console.error(`[CRON-MANAGER] ❌ Failed to start task ${taskName}:`, error);
-      return { 
-        success: false, 
+      console.error(`[CRON-MANAGER] Failed to start task ${taskName}:`, error);
+      return {
+        success: false,
         message: `Failed to start task ${taskName}`,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       };
     }
   }
@@ -183,11 +136,11 @@ class CronManager {
       return { success: true, message: `Task ${taskName} stopped successfully` };
 
     } catch (error) {
-      console.error(`[CRON-MANAGER] ❌ Failed to stop task ${taskName}:`, error);
-      return { 
-        success: false, 
+      console.error(`[CRON-MANAGER] Failed to stop task ${taskName}:`, error);
+      return {
+        success: false,
         message: `Failed to stop task ${taskName}`,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       };
     }
   }
@@ -216,24 +169,24 @@ class CronManager {
         running,
         status,
         lastRun: running ? new Date().toISOString() : undefined,
-        nextRun: running && task ? task.getNextRun()?.toISOString() : undefined
+        nextRun: running && task ? task.getNextRun()?.toISOString() : undefined,
       };
 
     } catch (error) {
-      console.error(`[CRON-MANAGER] ❌ Failed to get status for task ${taskName}:`, error);
+      console.error(`[CRON-MANAGER] Failed to get status for task ${taskName}:`, error);
       return {
         name: taskName,
         description: 'Unknown task',
         schedule: 'Unknown',
         running: false,
-        status: 'error'
+        status: 'error',
       };
     }
   }
 
   async getAllTaskStatus(): Promise<TaskStatus[]> {
     const statuses: TaskStatus[] = [];
-    
+
     for (const taskName of this.taskConfigs.keys()) {
       const status = await this.getTaskStatus(taskName);
       if (status) {
@@ -252,15 +205,15 @@ class CronManager {
       }
 
       await config.taskFunction();
-      
+
       return { success: true, message: `Task ${taskName} executed successfully` };
 
     } catch (error) {
-      console.error(`[CRON-MANAGER] ❌ Failed to execute task ${taskName}:`, error);
-      return { 
-        success: false, 
+      console.error(`[CRON-MANAGER] Failed to execute task ${taskName}:`, error);
+      return {
+        success: false,
         message: `Failed to execute task ${taskName}`,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       };
     }
   }
@@ -273,7 +226,7 @@ class CronManager {
         console.error(`[CRON] Failed to stop task ${taskName}:`, error);
       }
     }
-    
+
     this.tasks.clear();
   }
 

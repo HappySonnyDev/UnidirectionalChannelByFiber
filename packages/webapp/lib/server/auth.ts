@@ -1,255 +1,147 @@
 import "server-only";
-import { SignJWT, jwtVerify } from "jose";
 import { NextRequest } from "next/server";
 import {
   UserRepository,
-  SessionRepository,
   User,
   PaymentChannelRepository,
-  PAYMENT_CHANNEL_STATUS,
-} from "@/lib/server/database";
+} from '@/lib/server/database';
 
-// Utility function to validate public key format
-function isValidPublicKey(publicKey: string): boolean {
-  try {
-    // Remove 0x prefix if present
-    const cleanKey = publicKey.startsWith("0x")
-      ? publicKey.slice(2)
-      : publicKey;
-
-    // Check if it's a valid hex string of correct length (130 characters = 65 bytes uncompressed)
-    // or 66 characters = 33 bytes compressed
-    return (
-      /^[0-9a-fA-F]{130}$/.test(cleanKey) || /^[0-9a-fA-F]{66}$/.test(cleanKey)
-    );
-  } catch {
-    return false;
-  }
-}
-
-// JWT secret - in production, use a strong secret from environment variables
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET ||
-    "your-super-secret-jwt-key-change-this-in-production",
-);
-const SESSION_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
-
-export interface JWTPayload {
-  userId: number;
-  username: string;
-  publicKey?: string; // Updated to use public key instead of email
-  sessionId: string;
-}
+// ---------------------------------------------------------------------------
+// AuthService – Fiber/Passkey authentication via X-CKB-Address header
+// ---------------------------------------------------------------------------
 
 export class AuthService {
   private userRepo: UserRepository;
-  private sessionRepo: SessionRepository;
   private channelRepo: PaymentChannelRepository;
 
   constructor() {
     this.userRepo = new UserRepository();
-    this.sessionRepo = new SessionRepository();
     this.channelRepo = new PaymentChannelRepository();
   }
 
-  // Generate public key from server private key
-  private async generatePublicKey(): Promise<string> {
-    const privateKey = process.env.SELLER_PRIVATE_KEY;
-    if (!privateKey) {
-      throw new Error("SELLER_PRIVATE_KEY not found in environment variables");
-    }
-
-    // Use the centralized utility function from ckb module
-    const { privateKeyToPublicKeyHex } = await import("@/lib/shared/ckb");
-    return privateKeyToPublicKeyHex(privateKey);
-  }
-
-  // Generate seller address from server private key
-  private async generateSellerAddress(): Promise<string> {
-    const { ccc } = await import("@ckb-ccc/core");
-    const { DEVNET_SCRIPTS } = await import("@/lib/shared/ckb");
-
-    const privateKey = process.env.SELLER_PRIVATE_KEY;
-    if (!privateKey) {
-      throw new Error("SELLER_PRIVATE_KEY not found in environment variables");
-    }
-
-    const client = new ccc.ClientPublicTestnet({
-      url: "http://localhost:28114",
-      scripts: DEVNET_SCRIPTS,
-    });
-    const sellerSigner = new ccc.SignerCkbPrivateKey(client, privateKey);
-    const sellerAddress = await sellerSigner.getRecommendedAddress();
-
-    return sellerAddress;
-  }
-
-  // Public method to get the public key
-  async getPublicKey(): Promise<string> {
-    return this.generatePublicKey();
-  }
-
-  // Public method to get seller address
-  async getSellerAddress(): Promise<string> {
-    return this.generateSellerAddress();
-  }
-
-  // Get user's active payment channel (prioritize default channel)
+  // Get user's active payment channel (latest active channel for Fiber)
   getActivePaymentChannel(userId: number) {
-    // First try to get the user's default channel
-    const defaultChannel = this.channelRepo.getUserDefaultChannel(userId);
-    if (defaultChannel && defaultChannel.status === PAYMENT_CHANNEL_STATUS.ACTIVE) {
-      return defaultChannel;
-    }
-    
-    // Fallback to any active channel if no default is found
-    const channels = this.channelRepo.getPaymentChannelsByUserId(userId);
-    return channels.find(
-      (channel) => channel.status === PAYMENT_CHANNEL_STATUS.ACTIVE,
-    );
+    const user = this.userRepo.getUserById(userId);
+    if (!user || !user.public_key) return null;
+
+    return this.channelRepo.getLatestActiveChannelByUserAddress(user.public_key);
   }
 
-  // Generate session ID
-  private generateSessionId(): string {
-    return Math.random().toString(36).substring(2) + Date.now().toString(36);
-  }
-
-  // Create JWT token
-  private async createJWTToken(payload: JWTPayload): Promise<string> {
-    return await new SignJWT(payload as unknown as Record<string, unknown>)
-      .setProtectedHeader({ alg: "HS256" })
-      .setExpirationTime("7d")
-      .sign(JWT_SECRET);
-  }
-
-  // Verify JWT token
-  private async verifyJWTToken(token: string): Promise<JWTPayload | null> {
-    try {
-      const { payload } = await jwtVerify(token, JWT_SECRET);
-      return payload as unknown as JWTPayload;
-    } catch {
-      return null;
-    }
-  }
-
-  // Public method to verify JWT token and extract payload (for public key lookup)
-  async verifyJWTTokenForPublicKey(token: string): Promise<JWTPayload | null> {
-    return this.verifyJWTToken(token);
-  }
-
-  // Authenticate user with public key (secure method - private key never transmitted)
-  async loginWithPublicKey(
-    publicKey: string,
-  ): Promise<{ user: User; token: string }> {
-    // Validate public key format
-    if (!isValidPublicKey(publicKey)) {
-      throw new Error("Invalid public key format");
+  /**
+   * Login or register a user by CKB address.
+   * In the Fiber/Passkey model, authentication happens entirely on the client
+   * (Passkey + Fiber WASM node). The server only needs to identify users by
+   * their CKB address to look up / create user records.
+   */
+  async loginWithCkbAddress(ckbAddress: string): Promise<{ user: User }> {
+    if (!ckbAddress || ckbAddress.trim().length === 0) {
+      throw new Error("CKB address is required");
     }
 
-    // Try to find user by public key
-    let user = this.userRepo.getUserByPublicKey(publicKey);
+    // Try to find user by CKB address (stored in public_key field)
+    let user = this.userRepo.getUserByPublicKey(ckbAddress);
 
     if (!user) {
-      // Auto-create user with public key if not exists
-      // Generate a more unique username using more characters from public key
-      let username = `user_${publicKey.slice(0, 12)}`; // Use 12 characters for better uniqueness
+      // Auto-create user with CKB address as identifier
+      const username = `user_${ckbAddress.slice(0, 12)}`;
 
-      // Check if username already exists and add suffix if needed
+      let finalUsername = username;
       let counter = 1;
-      const originalUsername = username;
-      while (this.userRepo.getUserByUsername(username)) {
-        username = `${originalUsername}_${counter}`;
+      while (this.userRepo.getUserByUsername(finalUsername)) {
+        finalUsername = `${username}_${counter}`;
         counter++;
       }
 
       user = await this.userRepo.createUserFromPublicKey({
-        username,
-        public_key: publicKey,
+        username: finalUsername,
+        public_key: ckbAddress,
       });
     }
 
     // Update last login
     this.userRepo.updateLastLogin(user.id);
 
-    // Create new session
-    const sessionId = this.generateSessionId();
-    const expiresAt = new Date(Date.now() + SESSION_DURATION);
-    this.sessionRepo.createSession(user.id, sessionId, expiresAt);
-
-    // Create JWT token
-    const tokenPayload: JWTPayload = {
-      userId: user.id,
-      username: user.username,
-      publicKey: publicKey,
-      sessionId,
-    };
-    const token = await this.createJWTToken(tokenPayload);
-
-    return { user, token };
+    return { user };
   }
 
-  // Logout user
-  async logout(token: string): Promise<void> {
-    const payload = await this.verifyJWTToken(token);
-    if (payload) {
-      this.sessionRepo.deleteSession(payload.sessionId);
-    }
-  }
+  // Get current user from request (X-CKB-Address header only)
+  getCurrentUser(request: NextRequest): User | null {
+    const ckbAddress = request.headers.get("X-CKB-Address");
+    if (!ckbAddress) return null;
 
-  // Verify authentication
-  async verifyAuth(token: string): Promise<User | null> {
-    const payload = await this.verifyJWTToken(token);
-    if (!payload) {
-      return null;
+    let user = this.userRepo.getUserByPublicKey(ckbAddress);
+    if (!user) {
+      // Auto-create user based on CKB address so that subsequent
+      // requests can identify the user without requiring a prior login.
+      try {
+        const username = `user_${ckbAddress.slice(0, 12)}`;
+        let finalUsername = username;
+        let counter = 1;
+        while (this.userRepo.getUserByUsername(finalUsername)) {
+          finalUsername = `${username}_${counter}`;
+          counter++;
+        }
+        // createUserFromPublicKey is async but we call it in a sync method
+        // This is acceptable because better-sqlite3 is synchronous
+        user = this.userRepo.getUserByPublicKey(ckbAddress);
+      } catch {
+        user = this.userRepo.getUserByPublicKey(ckbAddress);
+      }
     }
-
-    // Check if session exists and is valid
-    const session = this.sessionRepo.getSession(payload.sessionId);
-    if (!session || new Date(session.expires_at) < new Date()) {
-      return null;
-    }
-
-    // Get user data
-    const user = this.userRepo.getUserById(payload.userId);
     return user;
   }
 
-  // Get current user from request
-  async getCurrentUser(request: NextRequest): Promise<User | null> {
-    const token = request.cookies.get("auth-token")?.value;
-    if (!token) {
-      return null;
+  /**
+   * Async version of getCurrentUser – needed when auto-creating the user
+   * (createUserFromPublicKey is async due to the legacy email/password path).
+   */
+  async getCurrentUserAsync(request: NextRequest): Promise<User | null> {
+    const ckbAddress = request.headers.get("X-CKB-Address");
+    if (!ckbAddress) return null;
+
+    let user = this.userRepo.getUserByPublicKey(ckbAddress);
+    if (!user) {
+      try {
+        const username = `user_${ckbAddress.slice(0, 12)}`;
+        let finalUsername = username;
+        let counter = 1;
+        while (this.userRepo.getUserByUsername(finalUsername)) {
+          finalUsername = `${username}_${counter}`;
+          counter++;
+        }
+        user = await this.userRepo.createUserFromPublicKey({
+          username: finalUsername,
+          public_key: ckbAddress,
+        });
+      } catch {
+        user = this.userRepo.getUserByPublicKey(ckbAddress);
+      }
     }
-
-    return this.verifyAuth(token);
+    return user;
   }
-
-  
 }
 
-// Utility functions for authentication
-export function setAuthCookie(token: string): string {
-  const maxAge = SESSION_DURATION / 1000; // Convert to seconds
-  return `auth-token=${token}; HttpOnly; Secure; SameSite=Strict; Max-Age=${maxAge}; Path=/`;
-}
+// ---------------------------------------------------------------------------
+// Utility functions
+// ---------------------------------------------------------------------------
 
-export function clearAuthCookie(): string {
-  return "auth-token=; HttpOnly; Secure; SameSite=Strict; Max-Age=0; Path=/";
+/**
+ * Get user identity from request (X-CKB-Address header only).
+ */
+export function getUserFromRequest(request: Request): { address: string } | null {
+  const address = request.headers.get("X-CKB-Address");
+  if (address) return { address };
+  return null;
 }
 
 // Server-side helper (Node.js Runtime)
 export async function requireAuth(request: NextRequest): Promise<User> {
   const authService = new AuthService();
-  const user = await authService.getCurrentUser(request);
+  const user = await authService.getCurrentUserAsync(request);
 
   if (!user) {
     throw new Error("Authentication required");
   }
 
   return user;
-}
-
-// New utility function to validate public key
-export function validatePublicKey(publicKey: string): boolean {
-  return isValidPublicKey(publicKey);
 }

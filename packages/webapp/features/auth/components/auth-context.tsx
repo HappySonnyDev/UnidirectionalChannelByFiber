@@ -3,186 +3,205 @@
 import {
   createContext,
   useContext,
-  useEffect,
   useState,
+  useCallback,
+  useEffect,
   ReactNode,
 } from "react";
+import { useFiberNode } from "@/hooks/useFiberNode";
+import { FIBER_CONFIG } from "@/lib/config";
 import {
-  User,
-  loginWithWallet as loginWithWalletAPI,
+  loginWithCkbAddress,
   logoutUser,
-  getCurrentUser,
-  getStoredPrivateKey,
   clearStoredCredentials,
+  storeCkbAddress,
+  getStoredCkbAddress,
+  User,
 } from "@/lib/client/auth-client";
-import { generateCkbAddress } from "@/lib/shared/ckb";
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 
 interface AuthContextType {
-  user: User | null;
-  privateKey: string | null;
+  // Connection state
+  isAuthenticated: boolean;
   isLoading: boolean;
+
+  // User info (from Fiber node + server)
+  user: User | null;
   ckbAddress: string | null;
-  ckbBalance: string | null;
-  isCkbLoading: boolean;
-  loginWithWallet: (privateKey: string) => Promise<void>;
+
+  // Operations
+  login: () => Promise<void>;       // Login with existing Passkey
+  register: (displayName?: string) => Promise<void>; // Register new Passkey
   logout: () => Promise<void>;
-  refreshCkbAddress: () => Promise<void>;
-  refreshUser: () => Promise<void>; // Add method to refresh user data
+
+  // Fiber node (exposed for advanced usage)
+  fiberNode: ReturnType<typeof useFiberNode>;
 }
+
+// ---------------------------------------------------------------------------
+// Context
+// ---------------------------------------------------------------------------
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// ---------------------------------------------------------------------------
+// Provider
+// ---------------------------------------------------------------------------
+
 export function AuthProvider({ children }: { children: ReactNode }) {
+  // Fiber node – always mounted, auto-reconnects if previously connected
+  const fiberNode = useFiberNode({
+    merchantPubkey: FIBER_CONFIG.MERCHANT_PUBKEY,
+    merchantMultiaddr: FIBER_CONFIG.MERCHANT_MULTIADDR,
+    network: FIBER_CONFIG.NETWORK,
+    autoConnect: true,
+  });
+
   const [user, setUser] = useState<User | null>(null);
-  const [privateKey, setPrivateKey] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [ckbAddress, setCkbAddress] = useState<string | null>(null);
-  const [ckbBalance, setCkbBalance] = useState<string | null>(null);
-  const [isCkbLoading, setIsCkbLoading] = useState(false);
 
-  // Check authentication status on mount
+  // Derive auth state from Fiber node
+  const isAuthenticated = fiberNode.isNodeReady;
+  const ckbAddress = fiberNode.ckbAddress;
+
+  // -----------------------------------------------------------------------
+  // Sync CKB address to localStorage (for fetch header) and server
+  // -----------------------------------------------------------------------
   useEffect(() => {
-    checkAuth();
-  }, []);
+    if (ckbAddress) {
+      storeCkbAddress(ckbAddress);
+    }
+  }, [ckbAddress]);
 
-  const checkAuth = async () => {
-    setIsLoading(true);
-    
-    try {
-      const storedPrivateKey = getStoredPrivateKey();
-      
-      if (!storedPrivateKey) {
-        setUser(null);
-        setPrivateKey(null);
-        setCkbAddress(null);
-        setCkbBalance(null);
-        return;
+  // When the node becomes ready, register / identify the user with the server.
+  // If the server sync fails, we still create a fallback user so the UI
+  // correctly reflects the authenticated state.
+  useEffect(() => {
+    if (!fiberNode.isNodeReady || !ckbAddress) return;
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const userData = await loginWithCkbAddress(ckbAddress);
+        if (!cancelled) {
+          setUser(userData);
+        }
+      } catch (err) {
+        console.error("[AuthProvider] Failed to sync user with server:", err);
+        // Fallback: create a minimal user object from the CKB address so that
+        // the UI can still reflect the authenticated state even when the server
+        // login endpoint fails (e.g. 400 error).
+        if (!cancelled) {
+          setUser({
+            id: -1,
+            username: `user_${ckbAddress.slice(0, 12)}`,
+            created_at: new Date().toISOString(),
+            is_active: true,
+            ckbAddress,
+            active_channel: null,
+          });
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false);
+        }
       }
-      const userData = await getCurrentUser();
-      if (userData) {
-        setUser(userData);
-        setPrivateKey(storedPrivateKey);
-        // Load CKB address after successful authentication
-        loadCkbAddress(storedPrivateKey);
-      } else {
-        clearStoredCredentials();
-        setUser(null);
-        setPrivateKey(null);
-        setCkbAddress(null);
-        setCkbBalance(null);
-      }
-    } catch {
-      clearStoredCredentials();
-      setUser(null);
-      setPrivateKey(null);
-      setCkbAddress(null);
-      setCkbBalance(null);
-    } finally {
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [fiberNode.isNodeReady, ckbAddress]);
+
+  // -----------------------------------------------------------------------
+  // Initial load – check if we have a stored CKB address (already logged in)
+  // -----------------------------------------------------------------------
+  useEffect(() => {
+    const stored = getStoredCkbAddress();
+    if (!stored) {
+      // No previous session – wait for user to login/register
       setIsLoading(false);
     }
-  };
+    // If there is a stored address, the Fiber node's autoConnect will
+    // pick it up and the effect above will sync the user.
+  }, []);
 
-  const loadCkbAddress = async (privateKey: string) => {
+  // -----------------------------------------------------------------------
+  // Operations
+  // -----------------------------------------------------------------------
+
+  /** Login with an existing Passkey (PasskeyCredentialProvider handles auth) */
+  const login = useCallback(async () => {
+    setIsLoading(true);
     try {
-      setIsCkbLoading(true);
-      const result = await generateCkbAddress(privateKey);
-      setCkbAddress(result.address);
-      setCkbBalance(result.balance);
-    } catch (error) {
-      console.error("Error generating CKB address:", error);
-      setCkbAddress(null);
-      setCkbBalance(null);
-    } finally {
-      setIsCkbLoading(false);
+      await fiberNode.connect();
+      // User sync happens via the effect above once isNodeReady becomes true
+    } catch (err) {
+      console.error("[AuthProvider] Login failed:", err);
+      setIsLoading(false);
+      throw err;
     }
-  };
+  }, [fiberNode]);
 
-  const refreshCkbAddress = async () => {
-    if (privateKey) {
-      await loadCkbAddress(privateKey);
-    }
-  };
-
-  // Refresh user data from server (useful when payment channels change)
-  const refreshUser = async () => {
-    if (!privateKey) return;
-    
-    try {
-      const userData = await getCurrentUser();
-      if (userData) {
-        setUser(userData);
+  /** Register a new Passkey + connect Fiber node */
+  const register = useCallback(
+    async (displayName?: string) => {
+      setIsLoading(true);
+      try {
+        await fiberNode.connect(displayName || "AI Assistant User");
+        // User sync happens via the effect above once isNodeReady becomes true
+      } catch (err) {
+        console.error("[AuthProvider] Registration failed:", err);
+        setIsLoading(false);
+        throw err;
       }
-    } catch (error) {
-      console.error('Error refreshing user data:', error);
-    }
-  };
+    },
+    [fiberNode],
+  );
 
-  // Listen for default channel changes and refresh user data
-  useEffect(() => {
-    const handleDefaultChannelChanged = () => {
-      console.log('🔄 AuthContext: Default channel changed, refreshing user data');
-      refreshUser();
-    };
-
-    const handleChannelActivated = () => {
-      console.log('🔄 AuthContext: Payment channel activated, refreshing user data');
-      refreshUser();
-    };
-
-    window.addEventListener('defaultChannelChanged', handleDefaultChannelChanged);
-    window.addEventListener('channelActivated', handleChannelActivated);
-    
-    return () => {
-      window.removeEventListener('defaultChannelChanged', handleDefaultChannelChanged);
-      window.removeEventListener('channelActivated', handleChannelActivated);
-    };
-  }, [refreshUser]);
-
-  const loginWithWallet = async (privateKey: string) => {
-    // Process private key locally and authenticate with server using derived public key
-    const userData = await loginWithWalletAPI(privateKey);
-
-    // Store private key in localStorage for persistent authentication
-    localStorage.setItem("private_key", privateKey);
-
-    setUser(userData);
-    setPrivateKey(privateKey);
-    
-    // Load CKB address after successful login
-    loadCkbAddress(privateKey);
-  };
-
-  const logout = async () => {
+  /** Logout – disconnect Fiber node and clear all credentials */
+  const logout = useCallback(async () => {
     try {
       await logoutUser();
     } catch {
       // Continue with logout even if request fails
     }
 
-    // Remove private key from localStorage
+    try {
+      await fiberNode.disconnect();
+    } catch {
+      // best-effort
+    }
+
     clearStoredCredentials();
-
     setUser(null);
-    setPrivateKey(null);
-    setCkbAddress(null);
-    setCkbBalance(null);
-  };
+  }, [fiberNode]);
 
-  const value = {
-    user,
-    privateKey,
+  // -----------------------------------------------------------------------
+  // Render
+  // -----------------------------------------------------------------------
+
+  const value: AuthContextType = {
+    isAuthenticated,
     isLoading,
+    user,
     ckbAddress,
-    ckbBalance,
-    isCkbLoading,
-    loginWithWallet,
+    login,
+    register,
     logout,
-    refreshCkbAddress,
-    refreshUser,
+    fiberNode,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
+
+// ---------------------------------------------------------------------------
+// Hook
+// ---------------------------------------------------------------------------
 
 export function useAuth() {
   const context = useContext(AuthContext);

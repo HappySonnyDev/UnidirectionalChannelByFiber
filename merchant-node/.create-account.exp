@@ -1,0 +1,36 @@
+#!/usr/bin/expect -f
+# Auto-create a new ckb-cli account and export its private key
+# Usage: ./create-account.exp <password> <export-path>
+
+set timeout 30
+set password [lindex $argv 0]
+set export_path [lindex $argv 1]
+
+# Step 1: create new account
+spawn ckb-cli account new --local-only
+expect {
+    -re "Password:" { send "$password\r"; exp_continue }
+    -re "Repeat password:" { send "$password\r"; exp_continue }
+    -re "lock_arg:" {
+        # capture next chunk; ckb-cli prints lock_arg after 'lock_arg:'
+        expect eof
+    }
+    eof
+}
+set new_output $expect_out(buffer)
+
+# Extract lock_arg via regex from captured output
+if {![regexp {lock_arg:\s*(0x[0-9a-fA-F]+)} $new_output -> lock_arg]} {
+    puts "ERROR: could not find lock_arg in output"
+    puts $new_output
+    exit 1
+}
+puts "LOCK_ARG=$lock_arg"
+
+# Step 2: export the key
+spawn ckb-cli account export --lock-arg $lock_arg --extended-privkey-path $export_path --local-only
+expect {
+    -re "Password:" { send "$password\r"; exp_continue }
+    eof
+}
+exit 0

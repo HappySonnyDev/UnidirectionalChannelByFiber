@@ -1,0 +1,1079 @@
+======================================
+Starting Fiber Merchant Node
+======================================
+Name: MerchantNode
+RPC:  127.0.0.1:8227
+P2P:  0.0.0.0:8228
+Data: data/merchant
+======================================
+  [2m2026-05-25T15:14:23.516197Z[0m [31mERROR[0m [1;31mfnn::fiber::network[0m[31m: [31mFailed to check shutdown tx for channel Hash256(0xf974a841a04f1857e9b68eaf30bd79ba4edd14a8724fb1ecf1221cc571e99fe1): http error: `error sending request for url (https://testnet.ckbapp.dev/)`
+
+Caused by:
+    0: error sending request for url (https://testnet.ckbapp.dev/)
+    1: client error (Connect)
+    2: connection closed via error[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/network.rs:2717
+
+  [2m2026-05-25T15:19:22.924377Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-25T15:19:23.926964Z[0m [31mERROR[0m [1;31mfnn::fiber::network[0m[31m: [31mFailed to check shutdown tx for channel Hash256(0xf974a841a04f1857e9b68eaf30bd79ba4edd14a8724fb1ecf1221cc571e99fe1): http error: `error sending request for url (https://testnet.ckbapp.dev/)`
+
+Caused by:
+    0: error sending request for url (https://testnet.ckbapp.dev/)
+    1: client error (Connect)
+    2: connection closed via error[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/network.rs:2717
+
+  [2m2026-05-25T15:29:23.582692Z[0m [31mERROR[0m [1;31mfnn::fiber::network[0m[31m: [31mFailed to check shutdown tx for channel Hash256(0xf974a841a04f1857e9b68eaf30bd79ba4edd14a8724fb1ecf1221cc571e99fe1): http error: `error sending request for url (https://testnet.ckbapp.dev/)`
+
+Caused by:
+    0: error sending request for url (https://testnet.ckbapp.dev/)
+    1: client error (Connect)
+    2: connection closed via error[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/network.rs:2717
+
+  [2m2026-05-25T15:44:23.727079Z[0m [31mERROR[0m [1;31mfnn::fiber::network[0m[31m: [31mFailed to check shutdown tx for channel Hash256(0x4ebbc238c8fc44cd189e2891c738c65ab53c84d84c6999f9bc797a9331d70f5a): http error: `error sending request for url (https://testnet.ckbapp.dev/)`
+
+Caused by:
+    0: error sending request for url (https://testnet.ckbapp.dev/)
+    1: client error (Connect)
+    2: connection closed via error[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/network.rs:2717
+
+  [2m2026-05-25T15:46:20.571948Z[0m [31mERROR[0m [1;31mfnn::fiber::network[0m[31m: [31mReceived a channel message for a channel that is not created with peer: Hash256(0x3473b97c223774abf6719c92bfd645ebb19e9a12ac60cbeefed95deb30a56b0a)[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/network.rs:1114
+
+  [2m2026-05-25T15:46:20.572047Z[0m [31mERROR[0m [1;31mfnn::fiber::network[0m[31m: [31mFailed to handle fiber network event: Channel not found error: Hash256(0x3473b97c223774abf6719c92bfd645ebb19e9a12ac60cbeefed95deb30a56b0a)[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/network.rs:5700
+
+  [2m2026-05-25T15:49:23.622291Z[0m [31mERROR[0m [1;31mfnn::ckb::tx_tracing_actor[0m[31m: [31mFailed to run CKB tx tracing task: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/ckb/tx_tracing_actor.rs:296
+
+  [2m2026-05-25T15:49:23.630387Z[0m [31mERROR[0m [1;31mfnn::fiber::network[0m[31m: [31mFailed to check shutdown tx for channel Hash256(0x4ebbc238c8fc44cd189e2891c738c65ab53c84d84c6999f9bc797a9331d70f5a): http error: `error sending request for url (https://testnet.ckbapp.dev/)`
+
+Caused by:
+    0: error sending request for url (https://testnet.ckbapp.dev/)
+    1: client error (Connect)
+    2: connection closed via error[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/network.rs:2717
+
+  [2m2026-05-25T15:49:27.563120Z[0m [31mERROR[0m [1;31mfnn::ckb::tx_tracing_actor[0m[31m: [31mFailed to run CKB tx tracing task: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/ckb/tx_tracing_actor.rs:296
+
+  [2m2026-05-25T15:49:44.585108Z[0m [31mERROR[0m [1;31mfnn::fiber::network[0m[31m: [31mFailed to send message to channel actor: channel Hash256(0xb92645e51d0881d231fdf787d662eec406b01a580f729343d0cfa951751f2e77) not found, message: Event(FundingTransactionConfirmed(H256 ( [ 0xbe, 0xa8, 0xac, 0x46, 0x12, 0xc3, 0x92, 0xcd, 0xe3, 0x24, 0x48, 0xf8, 0x02, 0xa1, 0x65, 0x2f, 0x90, 0x7e, 0xaf, 0x2c, 0xf2, 0xc8, 0xe2, 0x5b, 0xed, 0x07, 0xb6, 0x2c, 0xc5, 0x49, 0x84, 0xc5 ] ), 1, 1779724139676))[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/network.rs:5238
+
+  [2m2026-05-25T15:49:55.024407Z[0m [31mERROR[0m [1;31mfnn::ckb::actor[0m[31m: [31m[ckb] send transaction Byte32(0x5203bfa6641e95cd1eda0af1cb0b9fa2615efb029b501ea687fcfe24c3be7420) failed: Rpc(Error { code: ServerError(-301), message: "TransactionFailedToResolve: Resolve failed Unknown(OutPoint(0xc0f06540cdee119a6396969e3c6551220adb4635717975f67bd36fd95902c87000000000))", data: Some(String("Resolve(Unknown(OutPoint(0xc0f06540cdee119a6396969e3c6551220adb4635717975f67bd36fd95902c87000000000)))")) })[0m
+    [2;3mat[0m crates/fiber-lib/src/ckb/actor.rs:219
+
+  [2m2026-05-25T15:49:55.024489Z[0m [31mERROR[0m [1;31mfnn::fiber::in_flight_ckb_tx_actor[0m[31m: [31mfailed to send tx Hash256(0x5203bfa6641e95cd1eda0af1cb0b9fa2615efb029b501ea687fcfe24c3be7420) because of rpc error: jsonrpc error: `Server error: TransactionFailedToResolve: Resolve failed Unknown(OutPoint(0xc0f06540cdee119a6396969e3c6551220adb4635717975f67bd36fd95902c87000000000))`[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/in_flight_ckb_tx_actor.rs:242
+
+  [2m2026-05-25T15:49:56.322539Z[0m [31mERROR[0m [1;31mfnn::ckb::actor[0m[31m: [31m[ckb] send transaction Byte32(0x5203bfa6641e95cd1eda0af1cb0b9fa2615efb029b501ea687fcfe24c3be7420) failed: Rpc(Error { code: ServerError(-301), message: "TransactionFailedToResolve: Resolve failed Unknown(OutPoint(0xc0f06540cdee119a6396969e3c6551220adb4635717975f67bd36fd95902c87000000000))", data: Some(String("Resolve(Unknown(OutPoint(0xc0f06540cdee119a6396969e3c6551220adb4635717975f67bd36fd95902c87000000000)))")) })[0m
+    [2;3mat[0m crates/fiber-lib/src/ckb/actor.rs:219
+
+  [2m2026-05-25T15:49:56.322721Z[0m [31mERROR[0m [1;31mfnn::fiber::in_flight_ckb_tx_actor[0m[31m: [31mfailed to send tx Hash256(0x5203bfa6641e95cd1eda0af1cb0b9fa2615efb029b501ea687fcfe24c3be7420) because of rpc error: jsonrpc error: `Server error: TransactionFailedToResolve: Resolve failed Unknown(OutPoint(0xc0f06540cdee119a6396969e3c6551220adb4635717975f67bd36fd95902c87000000000))`[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/in_flight_ckb_tx_actor.rs:242
+
+  [2m2026-05-25T15:57:23.788377Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-25T16:04:27.247739Z[0m [31mERROR[0m [1;31mfnn::fiber::settle_tlc_set_command[0m[31m: [31mRemove TLCs for payment hash Hash256(0x3ee2a1c7aeee752a3a7806739eb66e7a206dea390339361bb2bf49226105333a) because of error HoldTlcTimeout[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/settle_tlc_set_command.rs:284
+
+  [2m2026-05-25T16:06:23.835698Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-25T16:06:24.044554Z[0m [31mERROR[0m [1;31mfnn::fiber::settle_tlc_set_command[0m[31m: [31mRemove TLCs for payment hash Hash256(0x93568dda0507a01bf7c7df339e85c84f29e27029619f7b50ddc0b56055db1de9) because of error HoldTlcTimeout[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/settle_tlc_set_command.rs:284
+
+  [2m2026-05-25T16:06:24.282830Z[0m [31mERROR[0m [1;31mfnn::fiber::settle_tlc_set_command[0m[31m: [31mRemove TLCs for payment hash Hash256(0x0fc73136501e654681b367ecf38c6ab71bd2d7d0fc6a3f9c8c3c6be181e6c564) because of error HoldTlcTimeout[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/settle_tlc_set_command.rs:284
+
+  [2m2026-05-25T16:06:24.557005Z[0m [31mERROR[0m [1;31mfnn::fiber::settle_tlc_set_command[0m[31m: [31mRemove TLCs for payment hash Hash256(0xa8a14e4d546f82fbdee54a097663f8b8770d17fb334b1365635a14ca2889452f) because of error HoldTlcTimeout[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/settle_tlc_set_command.rs:284
+
+  [2m2026-05-25T16:06:24.810049Z[0m [31mERROR[0m [1;31mfnn::fiber::settle_tlc_set_command[0m[31m: [31mRemove TLCs for payment hash Hash256(0xae302091a7450bc3c0ba17e883937b6ae9a1df00a3ad755a1dc960422bd71d62) because of error HoldTlcTimeout[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/settle_tlc_set_command.rs:284
+
+  [2m2026-05-25T16:06:25.073053Z[0m [31mERROR[0m [1;31mfnn::fiber::settle_tlc_set_command[0m[31m: [31mRemove TLCs for payment hash Hash256(0xb2261de87e6476b24a94f4a76c62542b187dd90957befca4324e21c5cf5dc74b) because of error HoldTlcTimeout[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/settle_tlc_set_command.rs:284
+
+  [2m2026-05-25T16:06:25.342763Z[0m [31mERROR[0m [1;31mfnn::fiber::settle_tlc_set_command[0m[31m: [31mRemove TLCs for payment hash Hash256(0x13e0f2556f9ce68a0a196f892e82307fc0971526bbad750ea9e7f4ac3dc88e92) because of error HoldTlcTimeout[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/settle_tlc_set_command.rs:284
+
+  [2m2026-05-25T16:06:25.611655Z[0m [31mERROR[0m [1;31mfnn::fiber::settle_tlc_set_command[0m[31m: [31mRemove TLCs for payment hash Hash256(0xddbd31b79b1379219c5cdda8e78a9d16c8e54b0b5841a7f16cf2525ae8a96678) because of error HoldTlcTimeout[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/settle_tlc_set_command.rs:284
+
+  [2m2026-05-25T16:06:25.877081Z[0m [31mERROR[0m [1;31mfnn::fiber::settle_tlc_set_command[0m[31m: [31mRemove TLCs for payment hash Hash256(0x84b9467e91871e1725ba3df3da8949c90c4519b1a7af941b2ccc5a08d64adf30) because of error HoldTlcTimeout[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/settle_tlc_set_command.rs:284
+
+  [2m2026-05-25T16:06:26.123409Z[0m [31mERROR[0m [1;31mfnn::fiber::settle_tlc_set_command[0m[31m: [31mRemove TLCs for payment hash Hash256(0x9c549dc8bbfc051cf260a2f004b5453c6192a5830a53e881cbe1e2e246545cfa) because of error HoldTlcTimeout[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/settle_tlc_set_command.rs:284
+
+  [2m2026-05-25T16:06:26.396852Z[0m [31mERROR[0m [1;31mfnn::fiber::settle_tlc_set_command[0m[31m: [31mRemove TLCs for payment hash Hash256(0x719e641b329cb45b7613934de1b03de2990ca55466b10737cc6ad0200ec275c7) because of error HoldTlcTimeout[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/settle_tlc_set_command.rs:284
+
+  [2m2026-05-25T16:06:26.666152Z[0m [31mERROR[0m [1;31mfnn::fiber::settle_tlc_set_command[0m[31m: [31mRemove TLCs for payment hash Hash256(0x99ced69ea15454a4c4fb3b6cf518482789603e27403b57a978fa5f2bbff380fd) because of error HoldTlcTimeout[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/settle_tlc_set_command.rs:284
+
+  [2m2026-05-25T16:06:26.914455Z[0m [31mERROR[0m [1;31mfnn::fiber::settle_tlc_set_command[0m[31m: [31mRemove TLCs for payment hash Hash256(0x4325d856ea495460ac6f5628492e6dc0409ae27a7a9cee51323db342cd57b529) because of error HoldTlcTimeout[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/settle_tlc_set_command.rs:284
+
+  [2m2026-05-25T16:06:27.147354Z[0m [31mERROR[0m [1;31mfnn::fiber::settle_tlc_set_command[0m[31m: [31mRemove TLCs for payment hash Hash256(0x8f98bd0d519b53d025790fecbc23fff45a5e6b19cb5dad62c890f0aa4a23d2b2) because of error HoldTlcTimeout[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/settle_tlc_set_command.rs:284
+
+  [2m2026-05-25T16:09:25.520456Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(SendRequest, hyper::Error(IncompleteMessage)) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-25T16:17:06.333722Z[0m [31mERROR[0m [1;31mfnn::fiber::settle_tlc_set_command[0m[31m: [31mRemove TLCs for payment hash Hash256(0x14d2e3c7ad19fddb848fb4eda026ff048fafefcf0d274c2c856abbc4c2222334) because of error HoldTlcTimeout[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/settle_tlc_set_command.rs:284
+
+  [2m2026-05-25T16:17:06.573283Z[0m [31mERROR[0m [1;31mfnn::fiber::settle_tlc_set_command[0m[31m: [31mRemove TLCs for payment hash Hash256(0xed6e2f94d436ab1f32591113b2a248461af060571ef71d5cc9dc56453522d557) because of error HoldTlcTimeout[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/settle_tlc_set_command.rs:284
+
+  [2m2026-05-26T03:03:28.691708Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-26T03:03:38.698141Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: TimedOut })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-26T03:16:23.913768Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-26T03:25:33.617378Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: TimedOut })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-26T07:25:24.247465Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(SendRequest, hyper::Error(IncompleteMessage)) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-26T18:37:26.315250Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(SendRequest, hyper::Error(IncompleteMessage)) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-26T19:29:23.491498Z[0m [31mERROR[0m [1;31mfnn::fiber::network[0m[31m: [31mFailed to check shutdown tx for channel Hash256(0x4ebbc238c8fc44cd189e2891c738c65ab53c84d84c6999f9bc797a9331d70f5a): http error: `error sending request for url (https://testnet.ckbapp.dev/)`
+
+Caused by:
+    0: error sending request for url (https://testnet.ckbapp.dev/)
+    1: client error (Connect)
+    2: connection closed via error[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/network.rs:2717
+
+  [2m2026-05-26T19:39:23.517854Z[0m [31mERROR[0m [1;31mfnn::fiber::network[0m[31m: [31mFailed to check shutdown tx for channel Hash256(0xb92645e51d0881d231fdf787d662eec406b01a580f729343d0cfa951751f2e77): http error: `error sending request for url (https://testnet.ckbapp.dev/)`
+
+Caused by:
+    0: error sending request for url (https://testnet.ckbapp.dev/)
+    1: client error (Connect)
+    2: connection closed via error[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/network.rs:2717
+
+  [2m2026-05-26T19:39:23.518835Z[0m [31mERROR[0m [1;31mfnn::fiber::network[0m[31m: [31mFailed to check shutdown tx for channel Hash256(0x4ebbc238c8fc44cd189e2891c738c65ab53c84d84c6999f9bc797a9331d70f5a): http error: `error sending request for url (https://testnet.ckbapp.dev/)`
+
+Caused by:
+    0: error sending request for url (https://testnet.ckbapp.dev/)
+    1: client error (Connect)
+    2: connection closed via error[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/network.rs:2717
+
+  [2m2026-05-26T19:39:28.954898Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(SendRequest, hyper::Error(IncompleteMessage)) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-26T19:51:24.522343Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(SendRequest, hyper::Error(IncompleteMessage)) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-26T20:01:25.535281Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-26T20:10:23.760156Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-26T20:10:25.845858Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-26T20:11:25.626832Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(SendRequest, hyper::Error(IncompleteMessage)) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-26T21:02:23.876279Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-26T21:03:25.092927Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-26T21:03:27.352399Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(SendRequest, hyper::Error(IncompleteMessage)) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-26T21:15:27.325291Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-26T21:24:23.548049Z[0m [31mERROR[0m [1;31mfnn::fiber::network[0m[31m: [31mFailed to check shutdown tx for channel Hash256(0x4ebbc238c8fc44cd189e2891c738c65ab53c84d84c6999f9bc797a9331d70f5a): http error: `error sending request for url (https://testnet.ckbapp.dev/)`
+
+Caused by:
+    0: error sending request for url (https://testnet.ckbapp.dev/)
+    1: client error (Connect)
+    2: connection closed via error[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/network.rs:2717
+
+  [2m2026-05-26T21:24:23.549336Z[0m [31mERROR[0m [1;31mfnn::fiber::network[0m[31m: [31mFailed to check shutdown tx for channel Hash256(0xb92645e51d0881d231fdf787d662eec406b01a580f729343d0cfa951751f2e77): http error: `error sending request for url (https://testnet.ckbapp.dev/)`
+
+Caused by:
+    0: error sending request for url (https://testnet.ckbapp.dev/)
+    1: client error (Connect)
+    2: connection closed via error[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/network.rs:2717
+
+  [2m2026-05-26T21:24:25.310520Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-26T21:24:27.533548Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(SendRequest, hyper::Error(IncompleteMessage)) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-26T21:26:25.916159Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(SendRequest, hyper::Error(IncompleteMessage)) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-27T00:31:24.035838Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-27T02:58:24.178484Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-27T02:58:26.617038Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(SendRequest, hyper::Error(IncompleteMessage)) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-27T05:15:23.852142Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-27T05:42:25.229043Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-27T06:46:25.229554Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-27T07:01:23.858691Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-27T07:29:23.669367Z[0m [31mERROR[0m [1;31mfnn::fiber::network[0m[31m: [31mFailed to check shutdown tx for channel Hash256(0xb92645e51d0881d231fdf787d662eec406b01a580f729343d0cfa951751f2e77): http error: `error sending request for url (https://testnet.ckbapp.dev/)`
+
+Caused by:
+    0: error sending request for url (https://testnet.ckbapp.dev/)
+    1: client error (Connect)
+    2: connection closed via error[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/network.rs:2717
+
+  [2m2026-05-27T08:27:32.347041Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: TimedOut })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-27T08:46:25.486542Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(SendRequest, hyper::Error(IncompleteMessage)) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-27T11:26:23.665963Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-27T11:27:23.690523Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-27T11:27:25.568084Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-27T11:28:24.311603Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(SendRequest, hyper::Error(IncompleteMessage)) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-27T11:31:25.878908Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(SendRequest, hyper::Error(IncompleteMessage)) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-27T12:21:24.637073Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-27T12:23:25.318140Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-27T12:27:25.528554Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-27T12:39:23.706500Z[0m [31mERROR[0m [1;31mfnn::fiber::network[0m[31m: [31mFailed to check shutdown tx for channel Hash256(0x4ebbc238c8fc44cd189e2891c738c65ab53c84d84c6999f9bc797a9331d70f5a): http error: `error sending request for url (https://testnet.ckbapp.dev/)`
+
+Caused by:
+    0: error sending request for url (https://testnet.ckbapp.dev/)
+    1: client error (Connect)
+    2: connection closed via error[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/network.rs:2717
+
+  [2m2026-05-27T12:39:23.713401Z[0m [31mERROR[0m [1;31mfnn::fiber::network[0m[31m: [31mFailed to check shutdown tx for channel Hash256(0xb92645e51d0881d231fdf787d662eec406b01a580f729343d0cfa951751f2e77): http error: `error sending request for url (https://testnet.ckbapp.dev/)`
+
+Caused by:
+    0: error sending request for url (https://testnet.ckbapp.dev/)
+    1: client error (Connect)
+    2: connection closed via error[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/network.rs:2717
+
+  [2m2026-05-27T13:35:24.119298Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-27T13:44:24.356707Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(SendRequest, hyper::Error(IncompleteMessage)) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-27T13:44:24.362665Z[0m [31mERROR[0m [1;31mfnn::fiber::network[0m[31m: [31mFailed to check shutdown tx for channel Hash256(0xb92645e51d0881d231fdf787d662eec406b01a580f729343d0cfa951751f2e77): http error: `error sending request for url (https://testnet.ckbapp.dev/)`
+
+Caused by:
+    0: error sending request for url (https://testnet.ckbapp.dev/)
+    1: client error (SendRequest)
+    2: connection closed before message completed[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/network.rs:2717
+
+  [2m2026-05-27T13:44:24.366327Z[0m [31mERROR[0m [1;31mfnn::fiber::network[0m[31m: [31mFailed to check shutdown tx for channel Hash256(0x4ebbc238c8fc44cd189e2891c738c65ab53c84d84c6999f9bc797a9331d70f5a): http error: `error sending request for url (https://testnet.ckbapp.dev/)`
+
+Caused by:
+    0: error sending request for url (https://testnet.ckbapp.dev/)
+    1: client error (SendRequest)
+    2: connection closed before message completed[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/network.rs:2717
+
+  [2m2026-05-27T13:46:23.825537Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-27T13:58:24.381976Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(SendRequest, hyper::Error(IncompleteMessage)) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-27T13:58:26.328549Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-27T16:30:26.683746Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(SendRequest, hyper::Error(IncompleteMessage)) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-27T16:36:25.021218Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-27T21:31:25.190496Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-27T21:51:23.855850Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-27T21:51:25.705865Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-27T21:52:24.051400Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-27T21:55:23.925083Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-27T22:04:25.352552Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-27T22:24:25.101984Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-27T22:25:25.222343Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-27T22:25:27.064289Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-28T00:22:25.205072Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-28T00:22:27.224049Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-28T00:59:24.027118Z[0m [31mERROR[0m [1;31mfnn::fiber::network[0m[31m: [31mFailed to check shutdown tx for channel Hash256(0x4ebbc238c8fc44cd189e2891c738c65ab53c84d84c6999f9bc797a9331d70f5a): http error: `error sending request for url (https://testnet.ckbapp.dev/)`
+
+Caused by:
+    0: error sending request for url (https://testnet.ckbapp.dev/)
+    1: client error (SendRequest)
+    2: connection closed before message completed[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/network.rs:2717
+
+  [2m2026-05-28T00:59:24.031707Z[0m [31mERROR[0m [1;31mfnn::fiber::network[0m[31m: [31mFailed to check shutdown tx for channel Hash256(0xb92645e51d0881d231fdf787d662eec406b01a580f729343d0cfa951751f2e77): http error: `error sending request for url (https://testnet.ckbapp.dev/)`
+
+Caused by:
+    0: error sending request for url (https://testnet.ckbapp.dev/)
+    1: client error (SendRequest)
+    2: connection closed before message completed[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/network.rs:2717
+
+  [2m2026-05-28T00:59:24.031769Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-28T01:23:24.331820Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(SendRequest, hyper::Error(IncompleteMessage)) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-28T01:31:24.210154Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-28T01:32:25.223788Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-28T01:38:25.509006Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-28T01:42:25.121988Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-28T01:42:27.294860Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(SendRequest, hyper::Error(IncompleteMessage)) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-28T01:49:24.347698Z[0m [31mERROR[0m [1;31mfnn::fiber::network[0m[31m: [31mFailed to check shutdown tx for channel Hash256(0x4ebbc238c8fc44cd189e2891c738c65ab53c84d84c6999f9bc797a9331d70f5a): http error: `error sending request for url (https://testnet.ckbapp.dev/)`
+
+Caused by:
+    0: error sending request for url (https://testnet.ckbapp.dev/)
+    1: client error (SendRequest)
+    2: connection closed before message completed[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/network.rs:2717
+
+  [2m2026-05-28T01:49:24.360238Z[0m [31mERROR[0m [1;31mfnn::fiber::network[0m[31m: [31mFailed to check shutdown tx for channel Hash256(0xb92645e51d0881d231fdf787d662eec406b01a580f729343d0cfa951751f2e77): http error: `error sending request for url (https://testnet.ckbapp.dev/)`
+
+Caused by:
+    0: error sending request for url (https://testnet.ckbapp.dev/)
+    1: client error (SendRequest)
+    2: connection closed before message completed[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/network.rs:2717
+
+  [2m2026-05-28T01:49:24.372707Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(SendRequest, hyper::Error(IncompleteMessage)) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-28T02:36:25.168180Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-28T02:40:25.261757Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-28T02:55:24.169625Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-28T02:55:26.939873Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-28T03:00:23.955299Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-28T03:08:24.226496Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-28T03:36:26.202763Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(SendRequest, hyper::Error(IncompleteMessage)) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-28T04:36:23.854518Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-28T04:37:25.203010Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-28T04:43:25.332617Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-28T05:07:23.899621Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-28T08:20:25.051592Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-28T10:14:23.939216Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-28T10:14:23.969046Z[0m [31mERROR[0m [1;31mfnn::fiber::network[0m[31m: [31mFailed to check shutdown tx for channel Hash256(0xb92645e51d0881d231fdf787d662eec406b01a580f729343d0cfa951751f2e77): http error: `error sending request for url (https://testnet.ckbapp.dev/)`
+
+Caused by:
+    0: error sending request for url (https://testnet.ckbapp.dev/)
+    1: client error (SendRequest)
+    2: connection closed before message completed[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/network.rs:2717
+
+  [2m2026-05-28T10:14:23.969359Z[0m [31mERROR[0m [1;31mfnn::fiber::network[0m[31m: [31mFailed to check shutdown tx for channel Hash256(0x4ebbc238c8fc44cd189e2891c738c65ab53c84d84c6999f9bc797a9331d70f5a): http error: `error sending request for url (https://testnet.ckbapp.dev/)`
+
+Caused by:
+    0: error sending request for url (https://testnet.ckbapp.dev/)
+    1: client error (SendRequest)
+    2: connection closed before message completed[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/network.rs:2717
+
+  [2m2026-05-28T10:14:25.745428Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-28T10:39:27.999404Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-28T10:39:32.082016Z[0m [31mERROR[0m [1;31mfnn::fiber::network[0m[31m: [31mFailed to check shutdown tx for channel Hash256(0x4ebbc238c8fc44cd189e2891c738c65ab53c84d84c6999f9bc797a9331d70f5a): http error: `error sending request for url (https://testnet.ckbapp.dev/)`
+
+Caused by:
+    0: error sending request for url (https://testnet.ckbapp.dev/)
+    1: operation timed out[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/network.rs:2717
+
+  [2m2026-05-28T10:39:38.005441Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: TimedOut })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-28T11:12:24.067480Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-28T16:05:32.231791Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: TimedOut })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-28T16:13:33.967216Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: TimedOut })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-28T23:47:24.484523Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(SendRequest, hyper::Error(IncompleteMessage)) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-29T00:04:24.987537Z[0m [31mERROR[0m [1;31mfnn::fiber::network[0m[31m: [31mFailed to check shutdown tx for channel Hash256(0xb92645e51d0881d231fdf787d662eec406b01a580f729343d0cfa951751f2e77): http error: `error sending request for url (https://testnet.ckbapp.dev/)`
+
+Caused by:
+    0: error sending request for url (https://testnet.ckbapp.dev/)
+    1: client error (Connect)
+    2: connection closed via error[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/network.rs:2717
+
+  [2m2026-05-29T00:04:25.045675Z[0m [31mERROR[0m [1;31mfnn::fiber::network[0m[31m: [31mFailed to check shutdown tx for channel Hash256(0x4ebbc238c8fc44cd189e2891c738c65ab53c84d84c6999f9bc797a9331d70f5a): http error: `error sending request for url (https://testnet.ckbapp.dev/)`
+
+Caused by:
+    0: error sending request for url (https://testnet.ckbapp.dev/)
+    1: client error (Connect)
+    2: connection closed via error[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/network.rs:2717
+
+  [2m2026-05-29T00:04:25.247235Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-29T00:04:28.222075Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-29T00:32:24.189779Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(SendRequest, hyper::Error(IncompleteMessage)) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-29T00:32:26.422638Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-29T00:46:25.635471Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(SendRequest, hyper::Error(IncompleteMessage)) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-29T01:09:24.365339Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-29T01:11:25.190905Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-29T01:13:24.243103Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(SendRequest, hyper::Error(IncompleteMessage)) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-29T01:22:23.960891Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-29T01:22:25.740001Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-29T01:25:24.121222Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-29T01:49:24.482080Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-29T01:55:26.367841Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(SendRequest, hyper::Error(IncompleteMessage)) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-29T01:55:28.155974Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-29T02:10:23.731489Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-29T02:10:25.671073Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-29T02:11:24.403399Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-29T08:51:23.912504Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-29T08:59:23.711533Z[0m [31mERROR[0m [1;31mfnn::fiber::network[0m[31m: [31mFailed to check shutdown tx for channel Hash256(0x4ebbc238c8fc44cd189e2891c738c65ab53c84d84c6999f9bc797a9331d70f5a): http error: `error sending request for url (https://testnet.ckbapp.dev/)`
+
+Caused by:
+    0: error sending request for url (https://testnet.ckbapp.dev/)
+    1: client error (Connect)
+    2: connection closed via error[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/network.rs:2717
+
+  [2m2026-05-29T11:23:24.061201Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-29T11:23:26.047274Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(SendRequest, hyper::Error(IncompleteMessage)) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-29T14:25:26.172047Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(SendRequest, hyper::Error(IncompleteMessage)) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-29T18:57:24.423734Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(SendRequest, hyper::Error(IncompleteMessage)) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-29T18:57:26.200674Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-29T19:02:25.055664Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-29T19:17:24.654315Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-29T19:41:24.516755Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(SendRequest, hyper::Error(IncompleteMessage)) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-29T19:41:26.280545Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-29T19:43:25.133448Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-29T20:11:23.821488Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-29T20:21:24.012210Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-29T20:22:24.009671Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-29T20:22:25.753734Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-29T20:26:25.493435Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(SendRequest, hyper::Error(IncompleteMessage)) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-29T20:26:28.784107Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(SendRequest, hyper::Error(IncompleteMessage)) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-29T20:35:23.911442Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-29T20:35:25.676090Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-30T04:53:23.832720Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-30T04:53:25.369650Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-30T05:34:32.017309Z[0m [31mERROR[0m [1;31mfnn::fiber::network[0m[31m: [31mFailed to check shutdown tx for channel Hash256(0xb92645e51d0881d231fdf787d662eec406b01a580f729343d0cfa951751f2e77): http error: `error sending request for url (https://testnet.ckbapp.dev/)`
+
+Caused by:
+    0: error sending request for url (https://testnet.ckbapp.dev/)
+    1: operation timed out[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/network.rs:2717
+
+  [2m2026-05-30T07:29:33.421739Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: TimedOut })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-30T11:59:32.068168Z[0m [31mERROR[0m [1;31mfnn::fiber::network[0m[31m: [31mFailed to check shutdown tx for channel Hash256(0x4ebbc238c8fc44cd189e2891c738c65ab53c84d84c6999f9bc797a9331d70f5a): http error: `error sending request for url (https://testnet.ckbapp.dev/)`
+
+Caused by:
+    0: error sending request for url (https://testnet.ckbapp.dev/)
+    1: operation timed out[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/network.rs:2717
+
+  [2m2026-05-30T11:59:32.068252Z[0m [31mERROR[0m [1;31mfnn::fiber::network[0m[31m: [31mFailed to check shutdown tx for channel Hash256(0xb92645e51d0881d231fdf787d662eec406b01a580f729343d0cfa951751f2e77): http error: `error sending request for url (https://testnet.ckbapp.dev/)`
+
+Caused by:
+    0: error sending request for url (https://testnet.ckbapp.dev/)
+    1: operation timed out[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/network.rs:2717
+
+  [2m2026-05-30T11:59:32.321199Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: TimedOut })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-30T11:59:42.327365Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: TimedOut })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-30T12:15:32.322193Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: TimedOut })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-30T12:15:38.581114Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-30T12:59:23.898067Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-30T13:44:26.150181Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(SendRequest, hyper::Error(IncompleteMessage)) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-30T14:00:32.297105Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: TimedOut })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-30T14:27:34.914694Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-30T14:53:24.093239Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-30T15:24:23.089461Z[0m [31mERROR[0m [1;31mfnn::fiber::network[0m[31m: [31mFailed to check shutdown tx for channel Hash256(0xb92645e51d0881d231fdf787d662eec406b01a580f729343d0cfa951751f2e77): http error: `error sending request for url (https://testnet.ckbapp.dev/)`
+
+Caused by:
+    0: error sending request for url (https://testnet.ckbapp.dev/)
+    1: client error (Connect)
+    2: connection closed via error[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/network.rs:2717
+
+  [2m2026-05-30T15:24:24.096167Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-30T15:24:24.118142Z[0m [31mERROR[0m [1;31mfnn::fiber::network[0m[31m: [31mFailed to check shutdown tx for channel Hash256(0x4ebbc238c8fc44cd189e2891c738c65ab53c84d84c6999f9bc797a9331d70f5a): http error: `error sending request for url (https://testnet.ckbapp.dev/)`
+
+Caused by:
+    0: error sending request for url (https://testnet.ckbapp.dev/)
+    1: client error (Connect)
+    2: connection closed via error[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/network.rs:2717
+
+  [2m2026-05-30T20:48:33.507648Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: TimedOut })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-30T22:48:25.060522Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-31T02:07:32.331629Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: TimedOut })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-05-31T16:15:24.355562Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(SendRequest, hyper::Error(IncompleteMessage)) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-01T02:09:32.192966Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: TimedOut })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-01T04:12:23.868791Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-01T04:12:25.448087Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-01T04:15:32.309592Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: TimedOut })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-01T06:29:23.625193Z[0m [31mERROR[0m [1;31mfnn::fiber::network[0m[31m: [31mFailed to check shutdown tx for channel Hash256(0x4ebbc238c8fc44cd189e2891c738c65ab53c84d84c6999f9bc797a9331d70f5a): http error: `error sending request for url (https://testnet.ckbapp.dev/)`
+
+Caused by:
+    0: error sending request for url (https://testnet.ckbapp.dev/)
+    1: client error (Connect)
+    2: connection closed via error[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/network.rs:2717
+
+  [2m2026-06-01T06:29:23.630170Z[0m [31mERROR[0m [1;31mfnn::fiber::network[0m[31m: [31mFailed to check shutdown tx for channel Hash256(0xb92645e51d0881d231fdf787d662eec406b01a580f729343d0cfa951751f2e77): http error: `error sending request for url (https://testnet.ckbapp.dev/)`
+
+Caused by:
+    0: error sending request for url (https://testnet.ckbapp.dev/)
+    1: client error (Connect)
+    2: connection closed via error[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/network.rs:2717
+
+  [2m2026-06-01T06:29:23.851399Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-01T06:29:24.460342Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-01T06:32:24.639948Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-01T08:16:26.075270Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(SendRequest, hyper::Error(IncompleteMessage)) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-02T04:56:23.647371Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-02T04:56:26.036901Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-02T05:17:24.218336Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-02T05:17:26.282518Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-02T05:25:25.929773Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(SendRequest, hyper::Error(IncompleteMessage)) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-02T05:31:25.835990Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-02T05:37:23.593593Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(SendRequest, hyper::Error(IncompleteMessage)) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-02T05:43:24.187731Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-02T05:54:23.639583Z[0m [31mERROR[0m [1;31mfnn::fiber::network[0m[31m: [31mFailed to check shutdown tx for channel Hash256(0xb92645e51d0881d231fdf787d662eec406b01a580f729343d0cfa951751f2e77): http error: `error sending request for url (https://testnet.ckbapp.dev/)`
+
+Caused by:
+    0: error sending request for url (https://testnet.ckbapp.dev/)
+    1: client error (Connect)
+    2: connection closed via error[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/network.rs:2717
+
+  [2m2026-06-02T06:01:24.079984Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-02T06:01:26.575820Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-02T06:03:25.075014Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-02T06:21:32.099903Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: TimedOut })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-02T07:28:24.165117Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-02T07:28:28.167586Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-02T07:35:24.860632Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(SendRequest, hyper::Error(IncompleteMessage)) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-02T07:35:27.263561Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-02T07:39:26.368874Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(SendRequest, hyper::Error(IncompleteMessage)) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-02T08:02:25.942861Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-02T08:10:25.572619Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-02T08:16:25.685738Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-02T10:02:24.478942Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-02T10:02:26.705254Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(SendRequest, hyper::Error(IncompleteMessage)) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-02T10:06:24.441302Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-02T10:06:26.360319Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(SendRequest, hyper::Error(IncompleteMessage)) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-02T10:13:24.447313Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-02T10:13:26.394607Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(SendRequest, hyper::Error(IncompleteMessage)) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-03T05:53:27.828980Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(SendRequest, hyper::Error(IncompleteMessage)) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-03T06:15:25.731020Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-03T06:15:29.252728Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(SendRequest, hyper::Error(IncompleteMessage)) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-03T06:20:26.818451Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-03T06:22:24.650392Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-03T06:24:24.321123Z[0m [31mERROR[0m [1;31mfnn::fiber::network[0m[31m: [31mFailed to check shutdown tx for channel Hash256(0xb92645e51d0881d231fdf787d662eec406b01a580f729343d0cfa951751f2e77): http error: `error sending request for url (https://testnet.ckbapp.dev/)`
+
+Caused by:
+    0: error sending request for url (https://testnet.ckbapp.dev/)
+    1: client error (Connect)
+    2: connection closed via error[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/network.rs:2717
+
+  [2m2026-06-03T06:24:24.339861Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-03T06:24:24.340045Z[0m [31mERROR[0m [1;31mfnn::fiber::network[0m[31m: [31mFailed to check shutdown tx for channel Hash256(0x4ebbc238c8fc44cd189e2891c738c65ab53c84d84c6999f9bc797a9331d70f5a): http error: `error sending request for url (https://testnet.ckbapp.dev/)`
+
+Caused by:
+    0: error sending request for url (https://testnet.ckbapp.dev/)
+    1: client error (Connect)
+    2: connection closed via error[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/network.rs:2717
+
+  [2m2026-06-03T06:38:23.920680Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-03T06:38:25.933965Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(SendRequest, hyper::Error(IncompleteMessage)) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-03T06:41:24.024538Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-03T06:44:23.648713Z[0m [31mERROR[0m [1;31mfnn::fiber::network[0m[31m: [31mFailed to check shutdown tx for channel Hash256(0x4ebbc238c8fc44cd189e2891c738c65ab53c84d84c6999f9bc797a9331d70f5a): http error: `error sending request for url (https://testnet.ckbapp.dev/)`
+
+Caused by:
+    0: error sending request for url (https://testnet.ckbapp.dev/)
+    1: client error (Connect)
+    2: connection closed via error[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/network.rs:2717
+
+  [2m2026-06-03T06:46:26.049169Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(SendRequest, hyper::Error(IncompleteMessage)) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-03T06:53:22.892475Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-03T06:53:25.969243Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-03T06:59:23.652274Z[0m [31mERROR[0m [1;31mfnn::fiber::network[0m[31m: [31mFailed to check shutdown tx for channel Hash256(0xb92645e51d0881d231fdf787d662eec406b01a580f729343d0cfa951751f2e77): http error: `error sending request for url (https://testnet.ckbapp.dev/)`
+
+Caused by:
+    0: error sending request for url (https://testnet.ckbapp.dev/)
+    1: client error (Connect)
+    2: connection closed via error[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/network.rs:2717
+
+  [2m2026-06-03T06:59:23.655658Z[0m [31mERROR[0m [1;31mfnn::fiber::network[0m[31m: [31mFailed to check shutdown tx for channel Hash256(0x4ebbc238c8fc44cd189e2891c738c65ab53c84d84c6999f9bc797a9331d70f5a): http error: `error sending request for url (https://testnet.ckbapp.dev/)`
+
+Caused by:
+    0: error sending request for url (https://testnet.ckbapp.dev/)
+    1: client error (Connect)
+    2: connection closed via error[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/network.rs:2717
+
+  [2m2026-06-03T07:11:28.922628Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-03T07:11:38.928618Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: TimedOut })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-03T07:46:24.569034Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(SendRequest, hyper::Error(IncompleteMessage)) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-03T07:46:26.481219Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-03T07:59:23.719914Z[0m [31mERROR[0m [1;31mfnn::fiber::network[0m[31m: [31mFailed to check shutdown tx for channel Hash256(0xb92645e51d0881d231fdf787d662eec406b01a580f729343d0cfa951751f2e77): http error: `error sending request for url (https://testnet.ckbapp.dev/)`
+
+Caused by:
+    0: error sending request for url (https://testnet.ckbapp.dev/)
+    1: client error (Connect)
+    2: connection closed via error[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/network.rs:2717
+
+  [2m2026-06-03T07:59:23.724761Z[0m [31mERROR[0m [1;31mfnn::fiber::network[0m[31m: [31mFailed to check shutdown tx for channel Hash256(0x4ebbc238c8fc44cd189e2891c738c65ab53c84d84c6999f9bc797a9331d70f5a): http error: `error sending request for url (https://testnet.ckbapp.dev/)`
+
+Caused by:
+    0: error sending request for url (https://testnet.ckbapp.dev/)
+    1: client error (Connect)
+    2: connection closed via error[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/network.rs:2717
+
+  [2m2026-06-03T09:06:28.908639Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(SendRequest, hyper::Error(IncompleteMessage)) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-03T09:07:24.182105Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-03T09:07:26.094941Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-03T13:10:27.895678Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-03T13:24:28.323584Z[0m [31mERROR[0m [1;31mfnn::fiber::network[0m[31m: [31mFailed to check shutdown tx for channel Hash256(0x4ebbc238c8fc44cd189e2891c738c65ab53c84d84c6999f9bc797a9331d70f5a): http error: `error sending request for url (https://testnet.ckbapp.dev/)`
+
+Caused by:
+    0: error sending request for url (https://testnet.ckbapp.dev/)
+    1: client error (Connect)
+    2: connection closed via error[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/network.rs:2717
+
+  [2m2026-06-04T00:50:23.949942Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-04T01:22:25.408345Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-04T01:28:25.675276Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(SendRequest, hyper::Error(IncompleteMessage)) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-04T01:33:23.977805Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-04T01:40:43.052509Z[0m [31mERROR[0m [1;31mfnn::fiber::settle_tlc_set_command[0m[31m: [31mRemove TLCs for payment hash Hash256(0x63428705b320a29d579e9ff43555cd71aa268ddd3573a7bc04edb0441266d5b8) because of error HoldTlcTimeout[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/settle_tlc_set_command.rs:284
+
+  [2m2026-06-04T01:40:43.270946Z[0m [31mERROR[0m [1;31mfnn::fiber::settle_tlc_set_command[0m[31m: [31mRemove TLCs for payment hash Hash256(0xb86e6d5e9934f64a1c6a0a91914415a49eb2503ccb7010073384a16712a1f7a9) because of error HoldTlcTimeout[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/settle_tlc_set_command.rs:284
+
+  [2m2026-06-04T01:40:43.529733Z[0m [31mERROR[0m [1;31mfnn::fiber::settle_tlc_set_command[0m[31m: [31mRemove TLCs for payment hash Hash256(0x4b376e42937cff693be3205e5faa89c7c11a0c68a89d47f9e7d683ede7a77d62) because of error HoldTlcTimeout[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/settle_tlc_set_command.rs:284
+
+  [2m2026-06-04T02:34:24.457593Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-04T02:34:24.458061Z[0m [31mERROR[0m [1;31mfnn::fiber::network[0m[31m: [31mFailed to check shutdown tx for channel Hash256(0x4ebbc238c8fc44cd189e2891c738c65ab53c84d84c6999f9bc797a9331d70f5a): http error: `error sending request for url (https://testnet.ckbapp.dev/)`
+
+Caused by:
+    0: error sending request for url (https://testnet.ckbapp.dev/)
+    1: client error (Connect)
+    2: connection closed via error[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/network.rs:2717
+
+  [2m2026-06-04T02:34:24.466498Z[0m [31mERROR[0m [1;31mfnn::fiber::network[0m[31m: [31mFailed to check shutdown tx for channel Hash256(0xb92645e51d0881d231fdf787d662eec406b01a580f729343d0cfa951751f2e77): http error: `error sending request for url (https://testnet.ckbapp.dev/)`
+
+Caused by:
+    0: error sending request for url (https://testnet.ckbapp.dev/)
+    1: client error (Connect)
+    2: connection closed via error[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/network.rs:2717
+
+  [2m2026-06-04T02:34:26.465505Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-04T02:39:23.614113Z[0m [31mERROR[0m [1;31mfnn::fiber::network[0m[31m: [31mFailed to check shutdown tx for channel Hash256(0xb92645e51d0881d231fdf787d662eec406b01a580f729343d0cfa951751f2e77): http error: `error sending request for url (https://testnet.ckbapp.dev/)`
+
+Caused by:
+    0: error sending request for url (https://testnet.ckbapp.dev/)
+    1: client error (Connect)
+    2: connection closed via error[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/network.rs:2717
+
+  [2m2026-06-04T02:39:23.625398Z[0m [31mERROR[0m [1;31mfnn::fiber::network[0m[31m: [31mFailed to check shutdown tx for channel Hash256(0x4ebbc238c8fc44cd189e2891c738c65ab53c84d84c6999f9bc797a9331d70f5a): http error: `error sending request for url (https://testnet.ckbapp.dev/)`
+
+Caused by:
+    0: error sending request for url (https://testnet.ckbapp.dev/)
+    1: client error (Connect)
+    2: connection closed via error[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/network.rs:2717
+
+  [2m2026-06-04T02:39:25.893190Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(SendRequest, hyper::Error(IncompleteMessage)) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-04T02:40:26.133258Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(SendRequest, hyper::Error(IncompleteMessage)) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-04T03:11:25.500711Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-04T05:49:24.349966Z[0m [31mERROR[0m [1;31mfnn::fiber::network[0m[31m: [31mFailed to check shutdown tx for channel Hash256(0xb92645e51d0881d231fdf787d662eec406b01a580f729343d0cfa951751f2e77): http error: `error sending request for url (https://testnet.ckbapp.dev/)`
+
+Caused by:
+    0: error sending request for url (https://testnet.ckbapp.dev/)
+    1: client error (SendRequest)
+    2: connection closed before message completed[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/network.rs:2717
+
+  [2m2026-06-04T05:49:24.368110Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-04T05:49:24.382576Z[0m [31mERROR[0m [1;31mfnn::fiber::network[0m[31m: [31mFailed to check shutdown tx for channel Hash256(0x4ebbc238c8fc44cd189e2891c738c65ab53c84d84c6999f9bc797a9331d70f5a): http error: `error sending request for url (https://testnet.ckbapp.dev/)`
+
+Caused by:
+    0: error sending request for url (https://testnet.ckbapp.dev/)
+    1: client error (SendRequest)
+    2: connection closed before message completed[0m
+    [2;3mat[0m crates/fiber-lib/src/fiber/network.rs:2717
+
+  [2m2026-06-04T05:49:26.083202Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: hyper_util::client::legacy::Error(Connect, Error { code: -9806, message: "connection closed via error" }) })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+
+  [2m2026-06-04T06:45:38.658263Z[0m [31mERROR[0m [1;31mfnn::watchtower::actor[0m[31m: [31mFailed to get transactions: Http(reqwest::Error { kind: Request, url: "https://testnet.ckbapp.dev/", source: TimedOut })[0m
+    [2;3mat[0m crates/fiber-lib/src/watchtower/actor.rs:389
+

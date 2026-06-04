@@ -1,109 +1,69 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth } from '@/lib/server/auth';
+import { NextResponse } from 'next/server';
+import { getUserFromRequest } from '@/lib/server/auth';
 import { PaymentChannelRepository, PAYMENT_CHANNEL_STATUS } from '@/lib/server/database';
 
-// Request body interface
-interface SetDefaultRequest {
-  channelId: string;
-}
-
-// Helper function to get status text
-function getStatusText(status: number): string {
-  switch (status) {
-    case PAYMENT_CHANNEL_STATUS.INACTIVE:
-      return 'Inactive';
-    case PAYMENT_CHANNEL_STATUS.ACTIVE:
-      return 'Active';
-    case PAYMENT_CHANNEL_STATUS.INVALID:
-      return 'Invalid';
-    default:
-      return 'Unknown';
-  }
-}
-
-export async function POST(request: NextRequest) {
+/**
+ * POST /api/channel/set-default
+ *
+ * Simplified for Fiber: In the Fiber model there is no explicit "default"
+ * channel concept. The latest active channel is used automatically.
+ * This endpoint remains for backward compatibility but now just
+ * returns the user's latest active channel.
+ */
+export async function POST(request: Request) {
   try {
-    // Require authentication
-    const user = await requireAuth(request);
+    const user = getUserFromRequest(request);
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-    const { channelId }: SetDefaultRequest = await request.json();
+    const { channel_id } = await request.json();
 
-    // Validate input
-    if (!channelId) {
+    if (!channel_id) {
       return NextResponse.json(
         { error: 'channelId is required' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    // Get payment channel from database
-    const paymentChannelRepo = new PaymentChannelRepository();
-    const paymentChannel = paymentChannelRepo.getPaymentChannelByChannelId(channelId);
+    const channelRepo = new PaymentChannelRepository();
+    const channel = channelRepo.getPaymentChannelByChannelId(channel_id);
 
-    if (!paymentChannel) {
+    if (!channel) {
       return NextResponse.json(
-        { error: 'Payment channel not found' },
-        { status: 404 }
+        { error: 'Channel not found' },
+        { status: 404 },
       );
     }
 
-    // Check if channel belongs to the authenticated user
-    if (paymentChannel.user_id !== user.id) {
+    if (channel.user_address !== user.address) {
       return NextResponse.json(
-        { error: 'Unauthorized access to payment channel' },
-        { status: 403 }
+        { error: 'Access denied' },
+        { status: 403 },
       );
     }
 
-    // Check if channel is active
-    if (paymentChannel.status !== PAYMENT_CHANNEL_STATUS.ACTIVE) {
+    if (channel.status !== PAYMENT_CHANNEL_STATUS.ACTIVE) {
       return NextResponse.json(
         { error: 'Only active channels can be set as default' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    // Set channel as default
-    const updatedChannel = paymentChannelRepo.setChannelAsDefault(channelId, user.id);
-
-    if (!updatedChannel) {
-      return NextResponse.json(
-        { error: 'Failed to set channel as default' },
-        { status: 500 }
-      );
-    }
-
-    // Return success response
+    // In Fiber, the latest active channel is the effective default
     return NextResponse.json({
       success: true,
-      message: 'Channel set as default successfully',
-      data: {
-        channelId: updatedChannel.channel_id,
-        status: updatedChannel.status,
-        statusText: getStatusText(updatedChannel.status),
-        isDefault: Boolean(updatedChannel.is_default),
-      }
+      message: 'In Fiber model, the latest active channel is used automatically',
+      channel_id: channel.channel_id,
+      status: channel.status,
     });
-
   } catch (error) {
     console.error('Set default channel error:', error);
 
     if (error instanceof Error) {
-      if (error.message === 'Authentication required') {
-        return NextResponse.json(
-          { error: 'Authentication required' },
-          { status: 401 }
-        );
-      }
-      return NextResponse.json(
-        { error: error.message },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

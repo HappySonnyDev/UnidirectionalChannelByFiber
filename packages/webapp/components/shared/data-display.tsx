@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Copy, Download, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { jsonStr } from "@/lib/shared/ckb";
+import { jsonStr } from "@/lib/shared/utils";
 
 interface DataDisplayProps {
   title: string;

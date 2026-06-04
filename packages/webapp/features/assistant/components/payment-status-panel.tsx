@@ -1,31 +1,37 @@
 import React from "react";
-import { Coins, Check, Loader2, Eye } from "lucide-react";
+import { Coins, Check, Loader2, AlertTriangle, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PaymentChannelInfo, PaymentRecord } from "./payment-types";
+import { shannonToCkbDisplay } from "@/lib/client/chunk-payment-integration";
 
 interface PaymentStatusPanelProps {
-  paymentChannelInfo: PaymentChannelInfo | null;
+  paymentChannelInfo: PaymentChannelInfo;
   paymentRecords: PaymentRecord[];
-  isProcessing: boolean;
   isStreamingActive: boolean;
-  autoPayUserSetting: boolean;
-  onAutoPayChange: (checked: boolean) => void;
-  onPayChunk: (chunkId: string) => void;
+  autoPayEnabled: boolean;
+  onAutoPayChange: (enabled: boolean) => void;
+  onRetryPayment: (record: PaymentRecord) => void;
   onShowDetails: (record: PaymentRecord) => void;
+  balanceError: string | null;
 }
 
 export const PaymentStatusPanel: React.FC<PaymentStatusPanelProps> = ({
   paymentChannelInfo,
   paymentRecords,
-  isProcessing,
   isStreamingActive,
-  autoPayUserSetting,
+  autoPayEnabled,
   onAutoPayChange,
-  onPayChunk,
+  onRetryPayment,
   onShowDetails,
+  balanceError,
 }) => {
+  const totalPaidCkb = shannonToCkbDisplay(paymentChannelInfo.totalPaidShannon);
+  const confirmedCount = paymentChannelInfo.confirmedCount;
+  const failedCount = paymentChannelInfo.failedCount;
+
   return (
     <div className="px-3 py-2 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
+      {/* Header row */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
           <Coins className="h-4 w-4" />
@@ -33,64 +39,23 @@ export const PaymentStatusPanel: React.FC<PaymentStatusPanelProps> = ({
         </div>
 
         <div className="flex items-center gap-4">
-          {/* Display cumulative and remaining tokens from latest chunk data */}
-          {paymentRecords.length > 0 && (
-            <div className="flex items-center gap-4 text-xs text-gray-600 dark:text-gray-400">
-              <span>
-                Cumulative: {Math.floor((paymentRecords[0].consumedTokens || 0)).toLocaleString()} Tokens
-              </span>
-              <span>
-                Remaining: {Math.floor((paymentRecords[0].remainingTokens || 0)).toLocaleString()} Tokens
-              </span>
-              <span
-                className={`inline-flex h-2 w-2 rounded-full ${
-                  paymentChannelInfo && paymentRecords[0].remainingTokens
-                    ? paymentRecords[0].remainingTokens < paymentChannelInfo.channelTotalTokens * 0.1
-                      ? "bg-red-500"
-                      : paymentRecords[0].remainingTokens < paymentChannelInfo.channelTotalTokens * 0.3
-                      ? "bg-gray-400"
-                      : "bg-gray-600"
-                    : "bg-gray-500"
-                }`}
-              />
-              <span>
-                {paymentChannelInfo && paymentRecords[0].remainingTokens
-                  ? Math.max(0, (paymentRecords[0].remainingTokens / paymentChannelInfo.channelTotalTokens * 100)).toFixed(1)
-                  : "0.0"}
-                % remaining
-              </span>
-            </div>
-          )}
+          {/* Balance & stats */}
+          <div className="flex items-center gap-4 text-xs text-gray-600 dark:text-gray-400">
+            <span>Balance: {paymentChannelInfo.availableBalance}</span>
+            <span>Paid: {totalPaidCkb} ({confirmedCount} invoices)</span>
+            {failedCount > 0 && (
+              <span className="text-red-500">{failedCount} failed</span>
+            )}
+          </div>
 
-          {/* Fallback to channel info if no payment records */}
-          {paymentRecords.length === 0 && paymentChannelInfo && (
-            <div className="flex items-center gap-4 text-xs text-gray-600 dark:text-gray-400">
-              <span>Cumulative: {paymentChannelInfo.consumedTokens.toLocaleString()} Tokens</span>
-              <span>Remaining: {paymentChannelInfo.remainingTokens.toLocaleString()} Tokens</span>
-              <span
-                className={`inline-flex h-2 w-2 rounded-full ${
-                  paymentChannelInfo.remainingTokens < paymentChannelInfo.channelTotalTokens * 0.1
-                    ? "bg-red-500"
-                    : paymentChannelInfo.remainingTokens < paymentChannelInfo.channelTotalTokens * 0.3
-                    ? "bg-gray-400"
-                    : "bg-gray-600"
-                }`}
-              />
-              <span>
-                {Math.max(0, (paymentChannelInfo.remainingTokens / paymentChannelInfo.channelTotalTokens * 100)).toFixed(1)}% remaining
-              </span>
-            </div>
-          )}
-
-          {/* Auto Pay Toggle Switch */}
+          {/* Auto Pay toggle */}
           <div className="flex items-center gap-2">
             <label className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 cursor-pointer">
               <input
                 type="checkbox"
-                checked={autoPayUserSetting}
+                checked={autoPayEnabled}
                 onChange={(e) => onAutoPayChange(e.target.checked)}
                 className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 focus:ring-offset-0 focus:ring-2"
-                disabled={isStreamingActive}
               />
               <span className="font-medium">Auto Pay</span>
             </label>
@@ -98,63 +63,93 @@ export const PaymentStatusPanel: React.FC<PaymentStatusPanelProps> = ({
         </div>
       </div>
 
+      {/* Balance error */}
+      {balanceError && (
+        <div className="mb-2 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-xs text-red-700 dark:text-red-300 flex items-center gap-2">
+          <AlertTriangle className="h-3 w-3 shrink-0" />
+          {balanceError}
+        </div>
+      )}
+
       {/* Payment Records List */}
       {paymentRecords.length > 0 ? (
         <div className="space-y-2 max-h-48 overflow-y-auto">
-          <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">Payment History:</div>
-          {paymentRecords.map((record, index) => (
+          <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">Invoice Payments:</div>
+          {paymentRecords.map((record) => (
             <div
-              key={`${record.chunkId}-${index}`}
+              key={`chunk-${record.chunkIndex}`}
               className="flex items-center justify-between bg-white dark:bg-gray-800 rounded px-3 py-2 text-xs border border-gray-200 dark:border-gray-600"
             >
               <div className="flex items-center gap-3">
-                <span className="font-mono text-gray-600 dark:text-gray-400">{record.chunkId.slice(-8)}...</span>
-                <span className="text-gray-900 dark:text-gray-100 font-medium">{record.tokens} tokens</span>
-                <span className="text-gray-700 dark:text-gray-300">Cumulative: {record.consumedTokens.toLocaleString()} Tokens</span>
-                <span className="text-gray-600 dark:text-gray-400">Remaining: {record.remainingTokens.toLocaleString()} Tokens</span>
-                {record.isPaying && (
-                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
+                <span className="font-mono text-gray-600 dark:text-gray-400">
+                  #{record.chunkIndex}
+                </span>
+                <span className="text-gray-900 dark:text-gray-100 font-medium">
+                  {shannonToCkbDisplay(record.amount)}
+                </span>
+                <span className="text-gray-500 dark:text-gray-500 font-mono text-[10px]">
+                  {record.payment_hash.slice(0, 16)}...
+                </span>
+
+                {/* Status badge */}
+                {record.status === 'pending' && (
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                    Pending
+                  </span>
+                )}
+                {record.status === 'paying' && (
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
                     <Loader2 className="h-3 w-3 mr-1 animate-spin" />
                     Paying...
                   </span>
                 )}
-                {!record.isPaying && record.isPaid === false && (
-                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
-                    Unpaid
-                  </span>
-                )}
-                {!record.isPaying && record.isPaid === true && (
-                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                {record.status === 'confirmed' && (
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
                     <Check className="h-3 w-3 mr-1" />
                     Paid
+                  </span>
+                )}
+                {record.status === 'failed' && (
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">
+                    <AlertTriangle className="h-3 w-3 mr-1" />
+                    Failed
+                  </span>
+                )}
+
+                {/* Error message */}
+                {record.error && record.status === 'failed' && (
+                  <span className="text-red-500 dark:text-red-400 text-[10px] max-w-48 truncate" title={record.error}>
+                    {record.error}
                   </span>
                 )}
               </div>
 
               <div className="flex items-center gap-2">
-                <span className="text-gray-500 dark:text-gray-500">{new Date(record.timestamp).toLocaleTimeString()}</span>
+                <span className="text-gray-500 dark:text-gray-500">
+                  {new Date(record.timestamp).toLocaleTimeString()}
+                </span>
 
-                {/* Show Pay button for unpaid records */}
-                {!record.isPaying && record.isPaid === false && (
+                {/* Retry button for failed payments */}
+                {record.status === 'failed' && (
                   <Button
-                    onClick={() => onPayChunk(record.chunkId)}
+                    onClick={() => onRetryPayment(record)}
                     size="sm"
                     variant="default"
                     className="h-6 px-2 text-xs bg-black hover:bg-gray-800 text-white dark:bg-white dark:hover:bg-gray-200 dark:text-black"
-                    disabled={isProcessing}
                   >
-                    {isProcessing ? <Loader2 className="h-3 w-3 animate-spin" /> : "Pay"}
+                    <RotateCcw className="h-3 w-3 mr-1" />
+                    Retry
                   </Button>
                 )}
 
-                {/* Show transaction details button for all records */}
+                {/* Details button */}
                 <Button
                   onClick={() => onShowDetails(record)}
                   size="sm"
                   variant="outline"
                   className="h-6 w-6 p-0 border-gray-300 hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-700"
                 >
-                  <Eye className="h-3 w-3" />
+                  <Coins className="h-3 w-3" />
                 </Button>
               </div>
             </div>
@@ -162,7 +157,7 @@ export const PaymentStatusPanel: React.FC<PaymentStatusPanelProps> = ({
         </div>
       ) : (
         <div className="text-xs text-gray-600 dark:text-gray-400 text-center py-4">
-          New chunk payments will appear here during chat interactions.
+          Invoice payments will appear here during chat interactions.
         </div>
       )}
     </div>

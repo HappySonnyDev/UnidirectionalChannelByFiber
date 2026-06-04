@@ -8,494 +8,371 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { ccc, hexFrom, WitnessArgs } from "@ckb-ccc/core";
-import {
-  buildClient,
-  executePayNow,
-  executeRefund,
-  PaymentResult,
-} from "@/lib/shared/ckb";
-import { channel } from "@/lib/client/api";
-import { DataDisplay } from "@/components/shared/data-display";
-import {
-  usePaymentChannels,
-  PaymentChannel,
-} from "@/features/payment/hooks/use-payment-channels";
-import { formatDbTimeToLocal } from "@/lib/shared/date-utils";
-import dayjs from 'dayjs';
-
-import { ChevronDown } from "lucide-react";
 import { useAuth } from "@/features/auth/components/auth-context";
+import { FIBER_CONFIG } from "@/lib/config";
+import {
+  Loader2,
+  Copy,
+  CheckCircle2,
+  AlertCircle,
+  RefreshCw,
+  Wallet,
+} from "lucide-react";
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+const SHANNON_PER_CKB = 100_000_000;
+const CHANNEL_RESERVE_CKB = Number(FIBER_CONFIG.PAYMENT.CHANNEL_RESERVE_SHANNON) / SHANNON_PER_CKB;
+
+/** Convert shannon string → CKB display string (2 decimal places) */
+function shannonToCkb(shannon: string): string {
+  const num = Number(shannon) / SHANNON_PER_CKB;
+  return num.toFixed(2);
+}
+
+/** Calculate available balance for a single channel */
+function channelAvailableCkb(ch: Channel): string {
+  const local = BigInt(ch.local_balance);
+  const offered = BigInt(ch.offered_tlc_balance);
+  const reserve = BigInt(FIBER_CONFIG.PAYMENT.CHANNEL_RESERVE_SHANNON);
+  const available = local - offered - reserve;
+  return available > BigInt(0)
+    ? (Number(available) / SHANNON_PER_CKB).toFixed(2)
+    : "0.00";
+}
+
+/** Truncate channel ID: first 8 chars … last 8 chars */
+function truncateId(id: string): string {
+  if (id.length <= 20) return id;
+  return `${id.slice(0, 10)}...${id.slice(-10)}`;
+}
+
+/** Get state name from channel */
+function getStateName(ch: Channel): string {
+  return ch.state.state_name;
+}
+
+/** Map state name to display config */
+function getStateConfig(stateName: string): {
+  label: string;
+  dotClass: string;
+  badgeClass: string;
+} {
+  const name = stateName.toUpperCase();
+
+  if (name === ChannelState.ChannelReady) {
+    return {
+      label: "就绪",
+      dotClass: "bg-green-500",
+      badgeClass: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
+    };
+  }
+  if (
+    name === ChannelState.AwaitingChannelReady ||
+    name === ChannelState.AwaitingTxSignatures ||
+    name === ChannelState.NegotiatingFunding ||
+    name === ChannelState.CollaboratingFundingTx ||
+    name === ChannelState.SigningCommitment
+  ) {
+    return {
+      label: "等待确认",
+      dotClass: "bg-amber-400",
+      badgeClass: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
+    };
+  }
+  if (name === ChannelState.ShuttingDown) {
+    return {
+      label: "关闭中",
+      dotClass: "bg-red-500",
+      badgeClass: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
+    };
+  }
+  if (name === ChannelState.Closed) {
+    return {
+      label: "已关闭",
+      dotClass: "bg-slate-400",
+      badgeClass: "bg-slate-100 text-slate-800 dark:bg-slate-900/30 dark:text-slate-400",
+    };
+  }
+  return {
+    label: stateName,
+    dotClass: "bg-slate-400",
+    badgeClass: "bg-slate-100 text-slate-800 dark:bg-slate-900/30 dark:text-slate-400",
+  };
+}
+
+import {
+  Channel,
+  ChannelState,
+} from '@fiber-pay/sdk/browser';
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
 
 export const PaymentChannelSettings: React.FC = () => {
-  const { channels, isLoading, refetch } = usePaymentChannels();
+  const { fiberNode } = useAuth();
+  const {
+    channels,
+    availableBalance,
+    ckbAddress,
+    onChainBalance,
+    isConnected,
+    refreshChannels,
+    closeChannel,
+  } = fiberNode;
+
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const [expandedChannels, setExpandedChannels] = useState<Set<string>>(
-    new Set(),
-  );
-  const { user } = useAuth();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Extract transaction information from refund transaction data
-  // Note: This function is kept for potential future use but currently unused
-  // since we now display the full transaction data using DataDisplay component
+  // Auto-refresh channels every 30s when connected
+  useEffect(() => {
+    if (!isConnected) return;
+    const interval = setInterval(() => {
+      refreshChannels().catch(() => {});
+    }, 30_000);
+    return () => clearInterval(interval);
+  }, [isConnected, refreshChannels]);
 
-  const toggleChannelExpansion = (channelId: string) => {
-    const newExpanded = new Set(expandedChannels);
-    if (newExpanded.has(channelId)) {
-      newExpanded.delete(channelId);
-    } else {
-      newExpanded.add(channelId);
-    }
-    setExpandedChannels(newExpanded);
-  };
-
-  const handlePayNow = async (channel: PaymentChannel) => {
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
     try {
-      setActionLoading(channel.channelId);
-
-      // Check if funding transaction data exists
-      if (!channel.fundingTxData) {
-        alert("No funding transaction data available for this channel.");
-        return;
-      }
-
-      // Use the shared payment utility
-      const result = await executePayNow({
-        channelId: channel.channelId,
-        fundingTx: JSON.parse(channel.fundingTxData),
-        amount: channel.amount,
-      });
-
-      if (result.success) {
-        alert(
-          `Payment successful and channel activated!\n` +
-            `Transaction Hash: ${result.txHash}\n` +
-            `Channel Status: ${result.channelStatus}`,
-        );
-
-        // Refresh the channels list to show updated status
-        await refetch();
-        
-        // Emit event to notify AuthContext that a channel was activated
-        const channelActivatedEvent = new CustomEvent('channelActivated', {
-          detail: { channelId: channel.channelId }
-        });
-        window.dispatchEvent(channelActivatedEvent);
-      } else {
-        alert(result.error);
-      }
-    } catch (error) {
-      console.error("Payment error:", error);
-      alert(
-        "Payment failed: " +
-          (error instanceof Error ? error.message : "Unknown error"),
-      );
+      await refreshChannels();
+    } catch (err) {
+      console.error("Refresh failed:", err);
     } finally {
-      setActionLoading(null);
+      setIsRefreshing(false);
     }
   };
 
-  const handleChannelAction = async (
-    channelId: string,
-    action: "activate" | "settle",
-  ) => {
+  const handleCloseChannel = async (channelId: string) => {
+    if (!confirm("关闭通道后，剩余余额将返还到您的链上地址。确认关闭？")) return;
+
     try {
       setActionLoading(channelId);
-
-      if (action === "settle") {
-        // Call the settlement API using the shared API function
-        const result = await channel.settle({
-          channelId,
-        });
-
-        alert(
-          `Channel settled successfully!\n` +
-            `Transaction Hash: ${result.txHash}\n` +
-            `Channel Status: ${result.channelStatus}`,
-        );
-
-        // Refresh the channels list
-        await refetch();
-      }
-    } catch (error) {
-      console.error(`Error ${action}ing channel:`, error);
-      alert(
-        `Failed to ${action} channel: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
+      setError(null);
+      await closeChannel(channelId);
+      await refreshChannels();
+    } catch (err) {
+      console.error("Close channel error:", err);
+      const msg = err instanceof Error ? err.message : "Unknown error";
+      setError(`关闭通道失败: ${msg}`);
     } finally {
       setActionLoading(null);
     }
   };
 
-  const handleSetDefault = async (channelId: string) => {
+  const copyToClipboard = async (text: string) => {
     try {
-      setActionLoading(channelId);
-
-      const result = await channel.setDefault({
-        channelId,
-      });
-
-      alert(`Channel set as default successfully!`);
-
-      // Refresh the channels list
-      await refetch();
-      
-      // Emit event to notify Payment Status and Payment History
-      const defaultChannelChangedEvent = new CustomEvent('defaultChannelChanged', {
-        detail: { channelId }
-      });
-      window.dispatchEvent(defaultChannelChangedEvent);
-    } catch (error) {
-      console.error("Error setting default channel:", error);
-      alert(
-        "Failed to set as default: " +
-          (error instanceof Error ? error.message : "Unknown error"),
-      );
-    } finally {
-      setActionLoading(null);
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Fallback for insecure contexts
+      const textArea = document.createElement("textarea");
+      textArea.value = text;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textArea);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     }
   };
 
-  const handleWithdrawDeposit = async (channel: PaymentChannel) => {
-    try {
-      setActionLoading(channel.channelId);
-
-      // Check if refund transaction data and seller signature exist
-      if (!channel.refundTxData || !channel.sellerSignature) {
-        alert(
-          "No refund transaction data or seller signature available for this channel.",
-        );
-        return;
-      }
-
-      // Use the shared refund utility
-      const result = await executeRefund({
-        refundTxData: channel.refundTxData,
-        sellerSignature: channel.sellerSignature,
-        durationSeconds: channel.durationSeconds,
-        durationDays: channel.durationDays,
-      });
-
-      if (result.success) {
-        alert(
-          `Deposit withdrawn successfully!\n` +
-            `Transaction Hash: ${result.txHash}\n` +
-            `You can check the transaction status on CKB Explorer.`,
-        );
-      } else {
-        alert(`Deposit withdrawal failed: ${result.error}`);
-      }
-
-      // Refresh the channels list
-      await refetch();
-    } catch (error) {
-      console.error("Deposit withdrawal error:", error);
-
-      // Provide more specific error messages
-      let errorMessage = "Failed to withdraw deposit: ";
-      if (error instanceof Error) {
-        if (error.message.includes("time")) {
-          errorMessage +=
-            "Channel timelock may not have expired yet. Please wait for the timelock period to complete.";
-        } else if (error.message.includes("signature")) {
-          errorMessage +=
-            "Signature validation failed. Please check your private key and seller signature.";
-        } else {
-          errorMessage += error.message;
-        }
-      } else {
-        errorMessage += "Unknown error";
-      }
-
-      alert(errorMessage);
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  const getStatusBadge = (status: number, statusText: string) => {
-    const baseClasses =
-      "inline-flex rounded-full px-3 py-1 text-xs font-medium";
-
-    switch (status) {
-      case 1: // Inactive
-        return (
-          <span
-            className={`${baseClasses} bg-gray-200 text-gray-800 dark:bg-gray-700/30 dark:text-gray-300`}
-          >
-            {statusText}
-          </span>
-        );
-      case 2: // Active
-        return (
-          <span
-            className={`${baseClasses} bg-gray-200 text-gray-800 dark:bg-gray-700/30 dark:text-gray-300`}
-          >
-            {statusText}
-          </span>
-        );
-      case 3: // Invalid
-        return (
-          <span
-            className={`${baseClasses} bg-gray-200 text-gray-800 dark:bg-gray-700/30 dark:text-gray-300`}
-          >
-            {statusText}
-          </span>
-        );
-      case 4: // Settled
-        return (
-          <span
-            className={`${baseClasses} bg-gray-200 text-gray-800 dark:bg-gray-700/30 dark:text-gray-300`}
-          >
-            {statusText}
-          </span>
-        );
-      case 5: // Expired
-        return (
-          <span
-            className={`${baseClasses} bg-gray-200 text-gray-800 dark:bg-gray-700/30 dark:text-gray-300`}
-          >
-            {statusText}
-          </span>
-        );
-      default:
-        return (
-          <span
-            className={`${baseClasses} bg-gray-200 text-gray-800 dark:bg-gray-700/30 dark:text-gray-300`}
-          >
-            {statusText}
-          </span>
-        );
-    }
-  };
-
-  const getPeriodRange = (
-    createdAt: string,
-    verifiedAt: string | undefined,
-    durationDays: number,
-    durationSeconds?: number,
-  ) => {
-    // Use verifiedAt for active channels, createdAt for inactive channels
-    const startDateStr = verifiedAt && verifiedAt !== null ? verifiedAt : createdAt;
-    // Use duration in seconds if available, otherwise convert days to seconds
-    const durationInSeconds = durationSeconds || durationDays * 24 * 60 * 60;
-    
-    try {
-      // Parse UTC time using dayjs and calculate end time
-      const startUtc = dayjs.utc(startDateStr);
-      const endUtc = startUtc.add(durationInSeconds, 'seconds');
-      
-      // Format both dates using the utility function
-      const startFormatted = formatDbTimeToLocal(startDateStr, 'MM/DD/YYYY HH:mm:ss');
-      const endFormatted = formatDbTimeToLocal(endUtc.toISOString(), 'MM/DD/YYYY HH:mm:ss');
-
-      return `${startFormatted} - ${endFormatted}`;
-    } catch (error) {
-      console.error('Error parsing date in getPeriodRange:', error, { startDateStr, durationInSeconds });
-      // Fallback to basic string formatting
-      return `${startDateStr} - (Duration: ${durationDays} days)`;
-    }
-  };
-
-  const getActionButton = (channel: PaymentChannel) => {
-    const isLoading = actionLoading === channel.channelId;
-
-    if (channel.status === 1) {
-      // Inactive - Show PayNow
-      return (
-        <Button
-          onClick={() => handlePayNow(channel)}
-          disabled={isLoading}
-          className="hover:bg.gray-800 bg-black px-4 py-2 text-sm text-white dark:bg-white dark:text-black dark:hover:bg-gray-200"
-          size="sm"
-        >
-          {isLoading ? "Processing..." : "Pay Now"}
-        </Button>
-      );
-    } else if (channel.status === 2) {
-      // Active - Show Manage dropdown
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              disabled={isLoading}
-              className="bg.black px-4 py-2 text-sm text-white hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200"
-              size="sm"
-            >
-              {isLoading ? (
-                "Processing..."
-              ) : (
-                <>
-                  Manage
-                  <ChevronDown className="ml-1 h-3 w-3" />
-                </>
-              )}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              onClick={() => handleSetDefault(channel.channelId)}
-              disabled={isLoading || channel.isDefault}
-            >
-              {channel.isDefault ? "✓ Already Default" : "Set as Default"}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => handleChannelAction(channel.channelId, "settle")}
-              disabled={isLoading}
-              className="text-gray-800 focus:text-gray-800 dark:text-gray-200 dark:focus:text-gray-200"
-            >
-              Settle Channel
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
-    } else if (channel.status === 5) {
-      // Expired - Show Withdraw Deposit
-      return (
-        <Button
-          onClick={() => handleWithdrawDeposit(channel)}
-          disabled={isLoading}
-          className="bg-black px-4 py-2 text-sm text-white hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200"
-          size="sm"
-        >
-          {isLoading ? "Processing..." : "Withdraw Deposit"}
-        </Button>
-      );
-    } else {
-      // Invalid or Settled - No actions available
-      return (
-        <span className="text-sm text-gray-500 dark:text-gray-400">
-          {/* No actions available */}
-        </span>
-      );
-    }
-  };
+  // Not connected state
+  if (!isConnected) {
+    return (
+      <div className="h-[600px] w-full max-w-none p-8">
+        <h3 className="mb-6 text-lg font-semibold">支付通道</h3>
+        <div className="rounded-lg border border-slate-200 bg-slate-50 p-6 text-center dark:border-slate-700 dark:bg-slate-800">
+          <Wallet className="mx-auto mb-3 h-10 w-10 text-slate-400" />
+          <p className="text-sm text-slate-600 dark:text-slate-400">
+            请先登录连接节点，以查看支付通道信息
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <TooltipProvider>
       <div className="h-[600px] w-full max-w-none overflow-y-scroll p-8">
-        <h3 className="mb-6 text-lg font-semibold">Payment Channels</h3>
+        {/* Header */}
+        <div className="mb-6 flex items-center justify-between">
+          <h3 className="text-lg font-semibold">支付通道</h3>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="gap-1.5"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? "animate-spin" : ""}`} />
+            刷新
+          </Button>
+        </div>
 
-        {isLoading ? (
-          <div className="rounded-lg border border-gray-100/30 bg-slate-50/50 shadow-sm dark:border-slate-700/40 dark:bg-slate-800">
-            <div className="p-6 text-center">
-              <p className="text-sm text-slate-600 dark:text-slate-400">
-                Loading payment channels...
-              </p>
-            </div>
+        {/* Total available balance */}
+        <div className="mb-6 rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-slate-600 dark:text-slate-400">
+              通道总可用余额
+            </span>
+            <span className="text-xl font-bold text-slate-900 dark:text-slate-100">
+              {availableBalance}
+            </span>
           </div>
-        ) : channels.length === 0 ? (
-          <div className="rounded-lg border border-gray-100/30 bg-slate-50/50 shadow-sm dark:border-slate-700/40 dark:bg-slate-800">
-            <div className="p-6 text-center">
-              <p className="text-sm text-slate-600 dark:text-slate-400">
-                No payment channels found. Create your first payment channel
-                using the Recharge tab.
-              </p>
+        </div>
+
+        {/* Deposit / Node address section */}
+        {ckbAddress && (
+          <div className="mb-6 rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+            <div className="mb-2 flex items-center gap-2">
+              <Wallet className="h-4 w-4 text-slate-500" />
+              <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                节点 CKB 地址（链上充值用）
+              </span>
             </div>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {channels.map((channel) => (
-              <div
-                key={channel.id}
-                className={`rounded-lg border shadow-sm ${
-                  channel.isDefault
-                    ? "border-gray-300 bg-gray-100/50 dark:border-gray-600/40 dark:bg-gray-800/20"
-                    : "border-gray-100/30 bg-slate-50/50 dark:border-slate-700/40 dark:bg-slate-800"
-                }`}
+            <div className="flex items-center gap-2">
+              <code className="flex-1 truncate text-xs text-slate-600 dark:text-slate-400">
+                {ckbAddress}
+              </code>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => copyToClipboard(ckbAddress)}
+                className="h-7 px-2"
               >
-                {/* Accordion Header */}
-                <div
-                  className="cursor-pointer p-4 transition-colors hover:bg-transparent dark:hover:bg-transparent"
-                  onClick={() => toggleChannelExpansion(channel.channelId)}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div className="font-mono text-xs text-slate-600 dark:text-slate-400">
-                            ...{channel.channelId.slice(-6)}
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p className="font-mono text-xs">
-                            {channel.channelId}
-                          </p>
-                        </TooltipContent>
-                      </Tooltip>
-                      <div className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                        {channel.amount.toLocaleString()} CKB /{" "}
-                        {(channel.amount * 0.01).toLocaleString()} Token
-                      </div>
-                      <div className="text-xs text-slate-600 dark:text-slate-400">
-                        {getPeriodRange(
-                          channel.createdAt,
-                          channel.verifiedAt,
-                          channel.durationDays,
-                          channel.durationSeconds,
-                        )}
-                      </div>
-                      <div>
-                        {getStatusBadge(channel.status, channel.statusText)}
-                      </div>
-                      {channel.isDefault && (
-                        <div className="inline-flex rounded-full bg-gray-200 px-2 py-1 text-xs font-medium text-gray-800 dark:bg-gray-700/30 dark:text-gray-300">
-                          Default
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex items-center space-x-3">
-                      {getActionButton(channel)}
-                      <div className="text-slate-400 dark:text-slate-500">
-                        {expandedChannels.has(channel.channelId) ? "▼" : "▶"}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Accordion Content */}
-                {expandedChannels.has(channel.channelId) && (
-                  <div className="border-t border-gray-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-900">
-                    {/* Funding Transaction */}
-                    {channel.fundingTxData && (
-                      <DataDisplay
-                        title="Funding Transaction"
-                        data={JSON.parse(channel.fundingTxData)}
-                      />
-                    )}
-                    {/* Refund Transaction */}
-                    {channel.refundTxData && (
-                      <DataDisplay
-                        title="Refund Transaction"
-                        data={JSON.parse(channel.refundTxData)}
-                      />
-                    )}
-
-                    {/* Seller Signature */}
-                    <DataDisplay
-                      title="Seller Signature"
-                      subtitle="If you haven't consumed any tokens, you can use this seller signature with the Refund Transaction to get a refund after the payment channel expires."
-                      data={channel.sellerSignature || "No signature available"}
-                    />
-                    {/* Settlement Transaction */}
-                    {channel.settleTxData && (
-                      <DataDisplay
-                        title="Settlement Transaction"
-                        data={JSON.parse(channel.settleTxData)}
-                      />
-                    )}
-                  </div>
+                {copied ? (
+                  <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                ) : (
+                  <Copy className="h-3.5 w-3.5" />
                 )}
-              </div>
-            ))}
+              </Button>
+            </div>
+            <p className="mt-2 text-xs text-slate-500 dark:text-slate-500">
+              链上余额: {onChainBalance}
+            </p>
           </div>
         )}
+
+        {/* Error display */}
+        {error && (
+          <div className="mb-4 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-400">
+            <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {/* Channel list */}
+        {channels.length === 0 ? (
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-6 text-center dark:border-slate-700 dark:bg-slate-800">
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              暂无支付通道。请前往「充值」页面开通您的第一个通道。
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {channels.map((ch) => {
+              const stateName = getStateName(ch);
+              const stateConfig = getStateConfig(stateName);
+              const isClosing = actionLoading === ch.channel_id;
+
+              return (
+                <div
+                  key={ch.channel_id}
+                  className="rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900"
+                >
+                  <div className="p-4">
+                    <div className="flex items-center justify-between">
+                      {/* Left: channel info */}
+                      <div className="flex items-center gap-4">
+                        {/* Status badge */}
+                        <span
+                          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${stateConfig.badgeClass}`}
+                        >
+                          <span className={`inline-block h-1.5 w-1.5 rounded-full ${stateConfig.dotClass}`} />
+                          {stateConfig.label}
+                        </span>
+
+                        {/* Channel ID (truncated) */}
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="cursor-default font-mono text-xs text-slate-500 dark:text-slate-400">
+                              {truncateId(ch.channel_id)}
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="max-w-xs break-all font-mono text-xs">
+                              {ch.channel_id}
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+
+                        {/* Channel capacity (local + remote balance) */}
+                        <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                          {shannonToCkb(
+                            (BigInt(ch.local_balance) + BigInt(ch.remote_balance)).toString(),
+                          )}{" "}
+                          CKB
+                        </span>
+
+                        {/* Available balance */}
+                        <span className="text-sm text-slate-600 dark:text-slate-400">
+                          可用: {channelAvailableCkb(ch)} CKB
+                        </span>
+                      </div>
+
+                      {/* Right: actions */}
+                      <div className="flex items-center gap-2">
+                        {/* Only show close for ready or pending channels */}
+                        {(
+                          stateName === ChannelState.ChannelReady ||
+                          stateName === ChannelState.AwaitingChannelReady ||
+                          stateName === ChannelState.AwaitingTxSignatures
+                        ) && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleCloseChannel(ch.channel_id)}
+                            disabled={isClosing}
+                            className="text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/20 dark:hover:text-red-300"
+                          >
+                            {isClosing ? (
+                              <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
+                            ) : null}
+                            关闭通道
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Extra info row for awaiting channels */}
+                    {stateName !== ChannelState.ChannelReady &&
+                      stateName !== ChannelState.Closed &&
+                      stateName !== ChannelState.ShuttingDown && (
+                        <div className="mt-2 flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400">
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                          <span>通道正在等待链上确认，请稍候...</span>
+                        </div>
+                      )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Footer info */}
+        <div className="mt-6 text-xs text-slate-500 dark:text-slate-500">
+          <p>每个通道预留 {CHANNEL_RESERVE_CKB} CKB 作为通道储备金，不可用于支付。</p>
+          <p className="mt-1">通道数据每 30 秒自动刷新，也可手动点击刷新按钮。</p>
+        </div>
       </div>
     </TooltipProvider>
   );

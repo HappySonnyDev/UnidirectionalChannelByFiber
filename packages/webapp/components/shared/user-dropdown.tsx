@@ -13,6 +13,7 @@ import { User, BarChart3, CreditCard, LogOut, ChevronDown, Wallet } from "lucide
 interface UserInfo {
   username: string;
   email?: string;
+  ckbAddress?: string;
 }
 
 interface UserDropdownProps {

@@ -1,0 +1,13 @@
+# Runtime data
+data/
+
+# Key files
+keys/
+
+# Binary files (download via download-fnn.sh)
+fnn
+fnn-cli
+fnn.tar.gz
+
+# Environment secrets
+.env

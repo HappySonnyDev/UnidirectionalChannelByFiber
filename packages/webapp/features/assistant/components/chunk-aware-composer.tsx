@@ -2,546 +2,363 @@ import { Button } from "@/components/ui/button";
 import { TooltipIconButton } from "@/features/assistant/components/tooltip-icon-button";
 import { ComposerAddAttachment, ComposerAttachments } from "@/features/assistant/components/attachment";
 import { useAuth } from '@/features/auth/components/auth-context';
-import { useChunkPayment } from '@/features/assistant/hooks/use-chunk-payment';
-import { Coins, X, ArrowUpIcon, Square, Check, Loader2, Eye } from "lucide-react";
-import React, { useState, useEffect, useCallback } from 'react';
-import { channel, chunks } from '@/lib/client/api';
+import { Coins, X, ArrowUpIcon, Square, Check, Loader2, Eye, AlertTriangle } from "lucide-react";
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { PaymentRecord, PaymentChannelInfo } from './payment-types';
 import { PaymentStatusPanel } from './payment-status-panel';
 import { TransactionDetailsModal } from './transaction-details-modal';
 import {
+  processInvoicePayment,
+  hasInsufficientBalance,
+  shannonToCkbDisplay,
+  type ChunkPaymentEvent,
+  type InvoiceFailedEvent,
+} from '@/lib/client/chunk-payment-integration';
+import {
   ComposerPrimitive,
   ThreadPrimitive,
   useComposerRuntime,
-  useThreadRuntime
+  useThreadRuntime,
 } from '@assistant-ui/react';
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 
 interface ChunkAwareComposerProps {
   onAuthRequired: () => void;
   onNewQuestion: () => string;
-  onOpenSettings: (tab: 'recharge') => void; // Add callback to open settings
+  onOpenSettings: (tab: 'recharge') => void;
 }
 
-interface PaymentChannel {
-  id: number;
-  channelId: string;
-  amount: number;
-  durationDays: number;
-  status: number;
-  statusText: string;
-  isDefault: boolean;
-  consumedTokens: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
-// Moved PaymentRecord to payment-types.ts
-
-// Moved PaymentChannelInfo to payment-types.ts
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
 
 export const ChunkAwareComposer: React.FC<ChunkAwareComposerProps> = ({
   onAuthRequired,
   onNewQuestion,
-  onOpenSettings
+  onOpenSettings,
 }) => {
-  const { user } = useAuth();
+  const { user, fiberNode } = useAuth();
   const composerRuntime = useComposerRuntime();
   const threadRuntime = useThreadRuntime();
-  const { payForChunk, isProcessing } = useChunkPayment();
-  
-  // Chunk payment state
+
+  // Payment state
   const [autoPayEnabled, setAutoPayEnabled] = useState(true);
-  const [autoPayUserSetting, setAutoPayUserSetting] = useState(true); // User's preference
   const [isStreamingActive, setIsStreamingActive] = useState(false);
-  const [hasStreamingStarted, setHasStreamingStarted] = useState(false); // Track if streaming has actually started
-  const [paymentChannelInfo, setPaymentChannelInfo] = useState<PaymentChannelInfo | null>(null);
   const [paymentRecords, setPaymentRecords] = useState<PaymentRecord[]>([]);
   const [selectedRecord, setSelectedRecord] = useState<PaymentRecord | null>(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [balanceError, setBalanceError] = useState<string | null>(null);
 
-  const [showPaymentModal, setShowPaymentModal] = useState(false); // For pre-send payment check modal
-  const [isDataLoading, setIsDataLoading] = useState(true); // Track if payment data is still loading
+  // Track active payments to avoid duplicates
+  const payingChunks = useRef<Set<number>>(new Set());
 
-  // Handle automatic payment for a chunk with enhanced payment info
-  const handlePayForChunkWithEnhancedInfo = useCallback(async (chunkId: string, paymentInfo: {
-    cumulativePayment: number;
-    remainingBalance: number;
-    channelId: string;
-    tokens: number;
-  }) => {
-    try {
-      const result = await payForChunk(chunkId, paymentInfo);
-      // Update payment record to paid
-      setPaymentRecords(prev => 
-        prev.map(record => 
-          record.chunkId === chunkId 
-            ? { 
-                ...record, 
-                isPaid: true, 
-                isPaying: false,
-                transactionData: result.transactionData ? (result.transactionData as unknown as Record<string, unknown>) : undefined,
-                // Keep the original consumedTokens - don't overwrite with current channel total
-                // consumedTokens: record.consumedTokens, // Preserve original cumulative value
-                remainingTokens: Math.floor(paymentInfo.remainingBalance * 0.01)
-              }
-            : record
+  // Derive channel info from fiber node + payment records
+  const paymentChannelInfo: PaymentChannelInfo = {
+    availableBalance: fiberNode.availableBalance,
+    totalPaidShannon: String(
+      paymentRecords
+        .filter(r => r.status === 'confirmed')
+        .reduce((sum, r) => sum + BigInt(r.amount || '0'), BigInt(0))
+    ),
+    confirmedCount: paymentRecords.filter(r => r.status === 'confirmed').length,
+    failedCount: paymentRecords.filter(r => r.status === 'failed').length,
+  };
+
+  // -----------------------------------------------------------------------
+  // Process an invoice-request event
+  // -----------------------------------------------------------------------
+  const handleInvoiceRequest = useCallback(async (
+    eventData: ChunkPaymentEvent['data'],
+  ) => {
+    const { chunkIndex, amount, invoice, payment_hash } = eventData;
+
+    // Avoid duplicate payments
+    if (payingChunks.current.has(chunkIndex)) return;
+
+    // Check balance
+    if (hasInsufficientBalance(fiberNode.availableBalance, amount)) {
+      setBalanceError(`Insufficient balance: ${fiberNode.availableBalance} available, need ${shannonToCkbDisplay(amount)}`);
+      setPaymentRecords(prev =>
+        prev.map(r =>
+          r.chunkIndex === chunkIndex
+            ? { ...r, status: 'failed' as const, error: 'Insufficient balance' }
+            : r
         )
       );
-      
-      console.log(`✅ Successfully auto-paid for chunk: ${chunkId} (${paymentInfo.tokens} tokens)`);
-    } catch (error) {
-      setPaymentRecords(prev => 
-        prev.map(record => 
-          record.chunkId === chunkId 
-            ? { ...record, isPaying: false }
-            : record
-        )
-      );
-      
-      console.error(`❌ Auto-payment failed for chunk ${chunkId}:`, error);
-    }
-  }, [payForChunk, paymentChannelInfo?.consumedTokens]);
-
-  // Fetch current payment channel data and latest chunk on component mount
-  useEffect(() => {
-    if (!user) return;
-    
-    const fetchChannelData = async () => {
-      try {
-        const result = await channel.list() as { data: { channels: PaymentChannel[] } };
-        const defaultChannel = result.data.channels.find((channel: PaymentChannel) => channel.isDefault && channel.status === 2);
-        
-        if (defaultChannel) {
-          // Initialize payment channel info from current channel
-          // Convert CKB amounts to tokens using 1 CKB = 0.01 Token ratio
-          const totalTokens = Math.floor(defaultChannel.amount * 0.01);
-          const consumedTokens = defaultChannel.consumedTokens;
-          const remainingTokens = totalTokens - consumedTokens;
-          
-          setPaymentChannelInfo({
-            currentChunkTokens: 0,
-            consumedTokens: consumedTokens,
-            remainingTokens: remainingTokens,
-            channelId: defaultChannel.channelId,
-            channelTotalTokens: totalTokens
-          });
-          
-          // Fetch the latest chunk payment record
-          const latestChunkResult = await chunks.latest() as { data: { hasLatestChunk: boolean; latestChunk: { chunkId: string; tokens: number; consumedTokens: number; remainingTokens: number; timestamp: string; transactionData?: Record<string, unknown>; isPaid: boolean } } };
-          
-          if (latestChunkResult && latestChunkResult.data && latestChunkResult.data.hasLatestChunk) {
-            const latestChunk = latestChunkResult.data.latestChunk;
-            
-            // Add the latest chunk to payment records
-            const initialRecord: PaymentRecord = {
-              chunkId: latestChunk.chunkId,
-              tokens: latestChunk.tokens,
-              consumedTokens: latestChunk.consumedTokens,
-              remainingTokens: latestChunk.remainingTokens,
-              timestamp: latestChunk.timestamp,
-              transactionData: latestChunk.transactionData,
-              isPaid: latestChunk.isPaid,
-              isPaying: false
-            };
-            
-            setPaymentRecords([initialRecord]);
-            console.log('📝 Loaded latest chunk record:', latestChunk.chunkId, 'isPaid:', latestChunk.isPaid);
-          } else {
-            // Reset payment records if no chunk found
-            setPaymentRecords([]);
-            console.log('📝 No latest chunk found - reset payment records');
-          }
-        } else {
-          // Reset both payment channel info and payment records if no default channel
-          setPaymentChannelInfo(null);
-          setPaymentRecords([]);
-          console.log('📝 No default channel found - reset payment data');
-        }
-      } catch (error) {
-        console.error('Failed to fetch channel data or latest chunk:', error);
-      } finally {
-        // Mark data loading as complete
-        setIsDataLoading(false);
-      }
-    };
-    
-    fetchChannelData();
-    
-    // Listen for default channel changes
-    const handleDefaultChannelChanged = (event: CustomEvent) => {
-      const { channelId } = event.detail;
-      console.log('🔄 Default channel changed to:', channelId, '- refreshing payment data');
-      // Reset loading state and refetch
-      setIsDataLoading(true);
-      fetchChannelData();
-    };
-    
-    window.addEventListener('defaultChannelChanged', handleDefaultChannelChanged as EventListener);
-    
-    return () => {
-      window.removeEventListener('defaultChannelChanged', handleDefaultChannelChanged as EventListener);
-    };
-  }, [user]);
-
-
-
-  // Listen for payment channel info from streaming data
-  useEffect(() => {
-    console.log('🎧 Setting up event listeners for payment events');
-    
-    const handleChunkPaymentUpdate = (event: CustomEvent) => {
-      const { chunkId, tokens, timestamp, cumulativePayment, remainingBalance, channelId, channelTotalAmount, isArrival } = event.detail;
-      
-      console.log('📡 Received chunkPaymentUpdate event:', {
-        chunkId,
-        tokens,
-        timestamp,
-        cumulativePayment,
-        remainingBalance,
-        channelId,
-        channelTotalAmount,
-        isArrival
-      });
-      
-      // Update channel info if available
-      if (channelTotalAmount !== undefined) {
-        const totalTokens = Math.floor(channelTotalAmount * 0.01);
-        const consumedTokens = Math.floor(cumulativePayment * 0.01);
-        const remainingTokens = totalTokens - consumedTokens;
-        
-        setPaymentChannelInfo({
-          currentChunkTokens: tokens,
-          consumedTokens: consumedTokens,
-          remainingTokens: remainingTokens,
-          channelId,
-          channelTotalTokens: totalTokens
-        });
-      }
-      
-      if (isArrival) {
-        // Create unpaid record immediately
-        const newRecord: PaymentRecord = {
-          chunkId,
-          tokens,
-          consumedTokens: Math.floor(cumulativePayment * 0.01), // Convert CKB to tokens
-          remainingTokens: Math.floor(remainingBalance * 0.01), // Convert CKB to tokens
-          timestamp: timestamp || new Date().toISOString(),
-          isPaid: false, // Initially unpaid
-          isPaying: false,
-        };
-        
-        setPaymentRecords(prev => {
-          const updated = [newRecord, ...prev];
-          console.log('📋 Updated payment records list, now has', updated.length, 'records');
-          return updated;
-        });
-        
-        // Auto-pay during streaming if enabled
-        if (autoPayUserSetting && isStreamingActive) {
-          console.log('🚀 Auto Pay: Immediately paying chunk during streaming:', chunkId);
-          
-          setPaymentRecords(prev => 
-            prev.map(record => 
-              record.chunkId === chunkId 
-                ? { ...record, isPaying: true }
-                : record
-            )
-          );
-          
-          handlePayForChunkWithEnhancedInfo(chunkId, {
-            cumulativePayment,
-            remainingBalance,
-            channelId,
-            tokens
-          });
-        } else {
-          console.log('⏸️ Auto Pay disabled or streaming ended - chunk will wait for manual payment or batch processing:', chunkId);
-        }
-      }
-    };
-
-    // Listen for successful payments from automatic payment system
-    const handleChunkPaymentSuccess = (event: CustomEvent) => {
-      const { chunkId, tokens, paidAmount, remainingAmount, timestamp, transactionData } = event.detail;
-      
-      console.log('🎉 Received chunkPaymentSuccess event:', {
-        chunkId,
-        tokens,
-        paidAmount,
-        remainingAmount,
-        timestamp
-      });
-      
-
-      
-      const paymentRecord: PaymentRecord = {
-        chunkId,
-        tokens,
-        consumedTokens: Math.floor(paidAmount * 0.01),
-        remainingTokens: Math.floor(remainingAmount * 0.01),
-        timestamp,
-        isPaid: true, // Mark as paid since this is a payment success event
-        isPaying: false,
-        transactionData
-      };
-      
-      // Update existing record or add new one
-      setPaymentRecords(prev => {
-        const existingIndex = prev.findIndex(record => record.chunkId === chunkId);
-        if (existingIndex >= 0) {
-          // Update existing record
-          const updated = [...prev];
-          updated[existingIndex] = paymentRecord;
-          console.log('📝 Updated existing payment record for chunk:', chunkId);
-          return updated;
-        } else {
-          // Add new record to front of list
-          console.log('📝 Added new payment record for chunk:', chunkId);
-          return [paymentRecord, ...prev];
-        }
-      });
-    };
-
-    // Listen for new chunks arriving from streaming (text-delta)
-    // Merged: newChunkArrived handling moved into handleChunkPaymentUpdate
-
-    window.addEventListener('chunkPaymentUpdate', handleChunkPaymentUpdate as EventListener);
-    window.addEventListener('chunkPaymentSuccess', handleChunkPaymentSuccess as EventListener);
-    // Removed: newChunkArrived listener merged into chunkPaymentUpdate
-    
-    console.log('✅ Event listeners added successfully');
-    
-    return () => {
-      console.log('🧹 Cleaning up event listeners');
-      window.removeEventListener('chunkPaymentUpdate', handleChunkPaymentUpdate as EventListener);
-      window.removeEventListener('chunkPaymentSuccess', handleChunkPaymentSuccess as EventListener);
-      // Removed: newChunkArrived listener merged into chunkPaymentUpdate
-    };
-  }, [handlePayForChunkWithEnhancedInfo, threadRuntime, autoPayUserSetting, isStreamingActive]); // Added autoPayUserSetting and isStreamingActive
-
-
-
-  // Handle manual payment for a specific chunk
-  const handlePayForChunk = async (chunkId: string) => {
-    // Find the payment record to get the payment info
-    const record = paymentRecords.find(r => r.chunkId === chunkId);
-    if (!record) {
-      console.error('Payment record not found for chunk:', chunkId);
-      alert('Payment record not found');
       return;
     }
 
-    // Mark as paying
+    setBalanceError(null);
+    payingChunks.current.add(chunkIndex);
 
-    setPaymentRecords(prev => 
-      prev.map(record => 
-        record.chunkId === chunkId 
-          ? { ...record, isPaying: true }
-          : record
+    // Mark as paying
+    setPaymentRecords(prev =>
+      prev.map(r =>
+        r.chunkIndex === chunkIndex
+          ? { ...r, status: 'paying' as const }
+          : r
       )
     );
 
     try {
-      // Use the enhanced payment method with calculated payment info from record data
-      const cumulativePayment = record.consumedTokens * 100; // Convert tokens to CKB
-      const remainingBalance = record.remainingTokens * 100; // Convert tokens to CKB
-      
-      const result = await payForChunk(chunkId, {
-        cumulativePayment,
-        remainingBalance,
-        channelId: paymentChannelInfo?.channelId || '',
-        tokens: record.tokens
-      });
-      
+      const result = await processInvoicePayment(fiberNode, eventData);
 
-      
-      // Update payment record to paid
-      setPaymentRecords(prev => 
-        prev.map(record => 
-          record.chunkId === chunkId 
-            ? { 
-                ...record, 
-                isPaid: true, 
-                isPaying: false,
-                transactionData: result.transactionData ? (result.transactionData as unknown as Record<string, unknown>) : undefined,
-                // Keep the original consumedTokens - don't overwrite with current channel total
-                // consumedTokens: record.consumedTokens, // Preserve original cumulative value
-                remainingTokens: Math.floor(result.remainingTokens * 0.01) // Convert CKB to tokens
-              }
-            : record
+      setPaymentRecords(prev =>
+        prev.map(r =>
+          r.chunkIndex === chunkIndex
+            ? { ...r, status: result.status, error: result.error }
+            : r
         )
       );
-      
-      console.log(`✅ Successfully paid for chunk: ${chunkId} (${result.tokens} tokens)`);
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Payment failed';
-      
 
-      
-      setPaymentRecords(prev => 
-        prev.map(record => 
-          record.chunkId === chunkId 
-            ? { ...record, isPaying: false }
-            : record
+      if (result.status === 'confirmed') {
+        console.log(`[Payment] Chunk #${chunkIndex} confirmed`);
+      } else {
+        console.warn(`[Payment] Chunk #${chunkIndex} failed:`, result.error);
+      }
+    } catch (err) {
+      setPaymentRecords(prev =>
+        prev.map(r =>
+          r.chunkIndex === chunkIndex
+            ? { ...r, status: 'failed' as const, error: err instanceof Error ? err.message : 'Unknown error' }
+            : r
         )
       );
-      
-      console.error(`❌ Failed to pay for chunk ${chunkId}:`, error);
-      
-      // Show user-friendly error message
-      alert(`Payment failed for chunk: ${errorMessage}`);
+    } finally {
+      payingChunks.current.delete(chunkIndex);
     }
-  };
+  }, [fiberNode]);
 
-  // Monitor streaming state and control Auto Pay
+  // -----------------------------------------------------------------------
+  // Listen for invoice events from the SSE stream via CustomEvents
+  // -----------------------------------------------------------------------
+  useEffect(() => {
+    // The assistant-ui runtime forwards 'data' type events as CustomEvents
+    // on the window object. We listen for 'invoice-request' and 'invoice-failed'.
+    const handleInvoiceRequestEvent = (event: CustomEvent) => {
+      const { type, data } = event.detail;
+
+      if (type === 'invoice-request') {
+        const invoiceData = data as ChunkPaymentEvent['data'];
+
+        // Create a payment record if it doesn't exist yet
+        setPaymentRecords(prev => {
+          if (prev.some(r => r.chunkIndex === invoiceData.chunkIndex)) return prev;
+          return [
+            ...prev,
+            {
+              chunkIndex: invoiceData.chunkIndex,
+              invoice: invoiceData.invoice,
+              payment_hash: invoiceData.payment_hash,
+              amount: invoiceData.amount,
+              status: 'pending' as const,
+              timestamp: new Date().toISOString(),
+            },
+          ];
+        });
+
+        // Auto-pay if enabled
+        if (autoPayEnabled && fiberNode.isNodeReady) {
+          handleInvoiceRequest(invoiceData);
+        }
+      }
+
+      if (type === 'invoice-failed') {
+        const failedData = data as InvoiceFailedEvent['data'];
+        console.warn(`[Payment] Invoice creation failed for chunk #${failedData.chunkIndex}:`, failedData.error);
+      }
+    };
+
+    window.addEventListener('assistant-ui-data', handleInvoiceRequestEvent as EventListener);
+
+    return () => {
+      window.removeEventListener('assistant-ui-data', handleInvoiceRequestEvent as EventListener);
+    };
+  }, [autoPayEnabled, fiberNode.isNodeReady, handleInvoiceRequest]);
+
+  // -----------------------------------------------------------------------
+  // Monitor streaming state
+  // -----------------------------------------------------------------------
   useEffect(() => {
     const runtime = threadRuntime;
     if (runtime && runtime.subscribe) {
       return runtime.subscribe(() => {
         const state = runtime.getState();
-        const isRunning = state.isRunning || false; // Check if assistant is currently running/streaming
-        
+        const isRunning = state.isRunning || false;
         setIsStreamingActive(isRunning);
-        
-        // Disable Auto Pay during streaming, enable after streaming completes
-        if (isRunning) {
-          setHasStreamingStarted(true);
-          console.log('🚫 Streaming started - Auto Pay disabled');
-          setAutoPayEnabled(false);
-        } else {
-          // Only process "streaming ended" logic if streaming had actually started
-          if (hasStreamingStarted) {
-            console.log('✅ Streaming ended - Auto Pay restored to user setting:', autoPayUserSetting);
-            setAutoPayEnabled(autoPayUserSetting);
-            
-            // No need to process unpaid chunks here anymore
-            // All chunks are already paid during streaming if Auto Pay is enabled
-            console.log('🏁 Streaming completed - all chunks should already be paid if Auto Pay was enabled');
-          } else {
-            console.log('🔄 Page initialized - streaming has not started yet, no Auto Pay triggered');
-          }
-        }
       });
     }
-  }, [threadRuntime, autoPayUserSetting, handlePayForChunkWithEnhancedInfo, paymentChannelInfo?.channelId, hasStreamingStarted]);
+  }, [threadRuntime]);
 
-  // Handle authentication and payment check before submission
+  // -----------------------------------------------------------------------
+  // Manual retry for a failed payment
+  //
+  // Before retrying, we check the actual payment status on the Fiber node:
+  //   - If the payment already succeeded (was marked "failed" prematurely),
+  //     we just confirm it on the server without re-sending.
+  //   - If the payment truly failed, we request a NEW invoice from the server
+  //     (Fiber invoices cannot be reused — each invoice can only be paid once).
+  // -----------------------------------------------------------------------
+  const handleRetryPayment = useCallback(async (record: PaymentRecord) => {
+    if (!fiberNode.isNodeReady) {
+      alert('Fiber node not connected');
+      return;
+    }
+
+    try {
+      // 1. Check actual payment status on the Fiber node
+      const paymentStatus = await fiberNode.getPayment(record.payment_hash);
+
+      if (paymentStatus?.status === 'Success') {
+        // Payment actually succeeded — it was marked "failed" prematurely.
+        // Just confirm it on the server and update local state.
+        await fetch(`/api/invoices/${record.payment_hash}/confirm`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ payment_hash: record.payment_hash }),
+        });
+
+        setPaymentRecords(prev =>
+          prev.map(r =>
+            r.chunkIndex === record.chunkIndex
+              ? { ...r, status: 'confirmed' as const, error: undefined }
+              : r
+          )
+        );
+        return;
+      }
+
+      // 2. Payment truly failed (or still in non-terminal state after timeout).
+      //    Need to request a NEW invoice — Fiber invoices cannot be reused.
+      const invoiceResponse = await fetch('/api/invoices/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: record.amount,
+          description: `Retry for chunk #${record.chunkIndex}`,
+        }),
+      });
+
+      const invoiceData = await invoiceResponse.json();
+
+      if (!invoiceResponse.ok || !invoiceData.success) {
+        const error = invoiceData.error || 'Failed to create new invoice';
+        setPaymentRecords(prev =>
+          prev.map(r =>
+            r.chunkIndex === record.chunkIndex
+              ? { ...r, error: `Retry failed: ${error}` }
+              : r
+          )
+        );
+        return;
+      }
+
+      // 3. Update the record with the new invoice data and pay it
+      setPaymentRecords(prev =>
+        prev.map(r =>
+          r.chunkIndex === record.chunkIndex
+            ? {
+                ...r,
+                invoice: invoiceData.invoice,
+                payment_hash: invoiceData.payment_hash,
+                status: 'pending' as const,
+                error: undefined,
+              }
+            : r
+        )
+      );
+
+      await handleInvoiceRequest({
+        invoice: invoiceData.invoice,
+        payment_hash: invoiceData.payment_hash,
+        amount: record.amount,
+        chunkIndex: record.chunkIndex,
+      });
+    } catch (err) {
+      setPaymentRecords(prev =>
+        prev.map(r =>
+          r.chunkIndex === record.chunkIndex
+            ? { ...r, error: `Retry error: ${err instanceof Error ? err.message : 'Unknown'}` }
+            : r
+        )
+      );
+    }
+  }, [fiberNode.isNodeReady, fiberNode.getPayment, handleInvoiceRequest]);
+
+  // -----------------------------------------------------------------------
+  // Pre-send validation
+  // -----------------------------------------------------------------------
   const handlePreSendValidation = useCallback(async () => {
     if (!user) {
       onAuthRequired();
       return false;
     }
-    
-    // Check if user has a default payment channel
-    if (!user.active_channel) {
-      console.log('❌ No default payment channel found - opening recharge settings');
-      onOpenSettings('recharge');
-      return false; // Prevent sending until user sets up a payment channel
+
+    // Check that the Fiber node is connected
+    if (!fiberNode.isNodeReady) {
+      alert('Fiber node is not connected. Please connect first.');
+      return false;
     }
-    
-    console.log('🔍 Pre-send validation - isDataLoading:', isDataLoading, 'paymentRecords.length:', paymentRecords.length);
-    
-    // Always fetch the latest chunk status to ensure we have current data
-    try {
-      const latestChunkResult = await chunks.latest() as { data: { hasLatestChunk: boolean; latestChunk: { chunkId: string; tokens: number; consumedTokens: number; remainingTokens: number; timestamp: string; transactionData?: Record<string, unknown>; isPaid: boolean } } };
-      
-      if (latestChunkResult && latestChunkResult.data && latestChunkResult.data.hasLatestChunk) {
-        const latestChunk = latestChunkResult.data.latestChunk;
-        console.log('🔍 Latest chunk status - chunkId:', latestChunk.chunkId, 'isPaid:', latestChunk.isPaid);
-        
-        // If latest chunk is unpaid, show payment modal and prevent sending
-        if (!latestChunk.isPaid) {
-          const record: PaymentRecord = {
-            chunkId: latestChunk.chunkId,
-            tokens: latestChunk.tokens,
-            consumedTokens: latestChunk.consumedTokens,
-            remainingTokens: latestChunk.remainingTokens,
-            timestamp: latestChunk.timestamp,
-            transactionData: latestChunk.transactionData,
-            isPaid: latestChunk.isPaid,
-            isPaying: false
-          };
-          
-          console.log('❌ Latest chunk is unpaid - showing payment modal and preventing send');
-          setSelectedRecord(record);
-          setShowPaymentModal(true);
-          return false; // Prevent sending - don't call onNewQuestion()
-        } else {
-          console.log('✅ Latest chunk is paid - allowing send');
-        }
-      } else {
-        console.log('ℹ️ No latest chunk found - allowing send');
-      }
-    } catch (error) {
-      console.error('Failed to fetch latest chunk status:', error);
-      // Continue with normal validation if fetch fails
+
+    // Check if there are any failed payments that should be retried
+    const failedPayments = paymentRecords.filter(r => r.status === 'failed');
+    if (failedPayments.length > 0 && !showPaymentModal) {
+      setSelectedRecord(failedPayments[0]);
+      setShowPaymentModal(true);
+      return false;
     }
-    
-    // Only generate new session ID if validation passes
+
     const sessionId = onNewQuestion();
-    console.log('✅ Pre-send validation passed - new session ID:', sessionId);
-    return true; // Allow sending
-  }, [user, onAuthRequired, onOpenSettings, onNewQuestion, isDataLoading, paymentRecords]);
-  
-  // Custom send handler with payment validation
+    console.log('[Composer] Pre-send validation passed - session:', sessionId);
+    return true;
+  }, [user, fiberNode.isNodeReady, paymentRecords, showPaymentModal, onAuthRequired, onNewQuestion]);
+
+  // -----------------------------------------------------------------------
+  // Send handler
+  // -----------------------------------------------------------------------
   const handleSend = useCallback(async () => {
-    console.log('📨 Send button clicked - starting validation');
     const isValid = await handlePreSendValidation();
-    console.log('🔍 Validation result:', isValid);
-    
-    if (!isValid) {
-      console.log('❌ Validation failed - not sending message');
-      return; // Pre-send validation failed
-    }
-    
-    console.log('✅ Validation passed - sending message');
-    // Validation passed, send the message
+    if (!isValid) return;
+
+    // Clear previous payment records for new conversation
+    setPaymentRecords([]);
+    setBalanceError(null);
     composerRuntime.send();
   }, [handlePreSendValidation, composerRuntime]);
-  
-  // Handle keyboard events for Enter key
+
+  // -----------------------------------------------------------------------
+  // Keyboard handler
+  // -----------------------------------------------------------------------
   const handleKeyDown = useCallback(async (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault(); // Prevent default composer send behavior
-      console.log('⌨️ Enter key pressed - triggering validation');
+      e.preventDefault();
       await handleSend();
     }
   }, [handleSend]);
-  
-  // Listen for submit events and intercept with payment validation
-  useEffect(() => {
-    const runtime = composerRuntime;
-    if (runtime && runtime.subscribe) {
-      return runtime.subscribe(() => {
-        const state = runtime.getState();
-        // We'll handle validation in the send button click instead
-        // This effect is kept for potential future use
-      });
-    }
-  }, [composerRuntime, user]);
 
-
-
+  // -----------------------------------------------------------------------
+  // Render
+  // -----------------------------------------------------------------------
   return (
     <div className="space-y-2">
       {user && (
         <PaymentStatusPanel
           paymentChannelInfo={paymentChannelInfo}
           paymentRecords={paymentRecords}
-          isProcessing={isProcessing}
           isStreamingActive={isStreamingActive}
-          autoPayUserSetting={autoPayUserSetting}
-          onAutoPayChange={(newSetting) => {
-            setAutoPayUserSetting(newSetting);
-            if (!isStreamingActive) {
-              setAutoPayEnabled(newSetting);
-            }
+          autoPayEnabled={autoPayEnabled}
+          onAutoPayChange={setAutoPayEnabled}
+          onRetryPayment={handleRetryPayment}
+          onShowDetails={(record) => {
+            setSelectedRecord(record);
+            setShowPaymentModal(false);
           }}
-          onPayChunk={handlePayForChunk}
-          onShowDetails={(record) => setSelectedRecord(record)}
+          balanceError={balanceError}
         />
       )}
-
-
 
       <ComposerPrimitive.Root className="aui-composer-root relative flex w-full flex-col rounded-3xl border border-border bg-muted px-1 pt-2 shadow-[0_9px_9px_0px_rgba(0,0,0,0.01),0_2px_5px_0px_rgba(0,0,0,0.06)] dark:border-muted-foreground/15">
         <ComposerAttachments />
@@ -553,7 +370,7 @@ export const ChunkAwareComposer: React.FC<ChunkAwareComposerProps> = ({
           aria-label="Message input"
           onKeyDown={handleKeyDown}
         />
-        
+
         <div className="aui-composer-action-wrapper relative mx-1 mt-2 mb-2 flex items-center justify-between">
           <ComposerAddAttachment />
 
@@ -591,14 +408,13 @@ export const ChunkAwareComposer: React.FC<ChunkAwareComposerProps> = ({
       {selectedRecord && (
         <TransactionDetailsModal
           selectedRecord={selectedRecord}
-          isProcessing={isProcessing}
           showPaymentModal={showPaymentModal}
           onClose={() => {
             setSelectedRecord(null);
             setShowPaymentModal(false);
           }}
-          onPayNow={(chunkId) => {
-            handlePayForChunk(chunkId);
+          onRetry={() => {
+            handleRetryPayment(selectedRecord);
             setSelectedRecord(null);
             setShowPaymentModal(false);
           }}

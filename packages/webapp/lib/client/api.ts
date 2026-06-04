@@ -58,9 +58,9 @@ interface ChannelSetDefaultRequest {
 // Authentication API
 export const auth = {
   /**
-   * Login with public key
+   * Login with CKB address (Fiber/Passkey auth)
    */
-  async login(data: { publicKey: string }): Promise<LoginResponse> {
+  async login(data: { ckbAddress: string }): Promise<LoginResponse> {
     return apiPost<LoginResponse>('/api/auth/login', data);
   },
 

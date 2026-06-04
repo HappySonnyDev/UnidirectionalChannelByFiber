@@ -1,0 +1,18 @@
+======================================
+Fiber WebSocket Proxy
+======================================
+WebSocket Listen: 0.0.0.0:8231
+Target TCP:       127.0.0.1:8228
+External IP:      74.48.84.187
+======================================
+
+For local testing:  ws://127.0.0.1:8231
+For external access: ws://74.48.84.187:8231
+
+Add to your webapp .env file:
+  VITE_FIBER_BOOTNODE=/ip4/74.48.84.187/tcp/8231/ws
+
+Press Ctrl+C to stop
+
+Starting WebSocket proxy (binary mode)...
+websocat: Unfortunately, serving multiple clients without --exit-on-eof (-E) or with -U option is prone to socket leak in this websocat version

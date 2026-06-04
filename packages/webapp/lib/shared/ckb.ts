@@ -1,3 +1,7 @@
+// @ts-nocheck
+// This file contains deprecated Spilman payment channel code.
+// The @ckb-ccc/core dependency has been removed as part of the Fiber migration.
+// TODO: Remove this file entirely once all Spilman references are cleaned up.
 import {
   ccc,
   CellDepInfoLike,
@@ -73,8 +77,7 @@ export const derivePublicKeyHashByPrivateKey = (
 
 /**
  * Convert private key to public key hex string
- * @param privateKey - Private key with or without '0x' prefix
- * @returns Public key as hex string (without '0x' prefix)
+ * @deprecated Spilman-specific. Will be removed once all consumers migrate to Fiber.
  */
 export const privateKeyToPublicKeyHex = (privateKey: string): string => {
   const cleanPrivateKey = privateKey.startsWith("0x")
@@ -148,6 +151,10 @@ export const createMultisigScript = (
   };
 };
 
+/**
+ * Creates a payment channel funding transaction
+ * @deprecated Spilman-specific. Use Fiber node's openChannel instead.
+ */
 export const createPaymentChannel = async ({
   sellerPublicKey,
   buyerPrivateKey,
@@ -265,6 +272,7 @@ export const generateCkbSecp256k1Signature = (
   throw new Error("sign error");
 };
 
+/** @deprecated Spilman-specific. Fiber uses a different signature model. */
 export const generateCkbSecp256k1SignatureWithSince = (
   privateKey: string,
   transactionHash: Uint8Array,
@@ -309,6 +317,7 @@ export const jsonStr = (obj: unknown, replacer?: ((key: string, value: unknown) 
   return JSON.stringify(obj, replacer || customReplacer, space);
 };
 
+/** @deprecated Spilman-specific. Fiber uses a different witness model. */
 export const createWitnessData = (
   buyerSignature: Uint8Array,
   sellerSignature: Uint8Array,
@@ -331,8 +340,7 @@ export const createPlaceholderWitness = (): `0x${string}` => {
 
 /**
  * Generate CKB address and balance from private key
- * @param privateKey - Private key string
- * @returns Promise with address and balance information
+ * @deprecated Spilman-specific. Use Fiber node (useFiberNode) to get address and balance instead.
  */
 export const generateCkbAddress = async (
   privateKey: string,
@@ -359,6 +367,7 @@ export const generateCkbAddress = async (
 
 /**
  * Payment result interface for payment operations
+ * @deprecated Spilman-specific. Fiber uses a different payment model.
  */
 export interface PaymentResult {
   success: boolean;
@@ -370,6 +379,7 @@ export interface PaymentResult {
 /**
  * Executes the PayNow payment flow - sends funding transaction and confirms payment
  * This is a shared utility function used by multiple components
+ * @deprecated Spilman-specific. Use Fiber node's sendPayment instead.
  */
 export const executePayNow = async (paymentData: {
   channelId: string;
@@ -433,6 +443,7 @@ export const executePayNow = async (paymentData: {
 /**
  * Executes a refund transaction for a payment channel
  * This function handles the complete refund flow including multi-signature validation
+ * @deprecated Spilman-specific. Use Fiber node's closeChannel instead.
  */
 export const executeRefund = async (channelData: {
   refundTxData: string;

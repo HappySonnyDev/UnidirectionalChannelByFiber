@@ -36,7 +36,7 @@ export function AuthDialog({
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Sign In to Your Account</DialogTitle>
+          <DialogTitle>Welcome</DialogTitle>
         </DialogHeader>
 
         {/* Form Content */}
@@ -46,8 +46,12 @@ export function AuthDialog({
 
         {/* Info Message */}
         <div className="mt-4 text-center text-sm text-gray-600">
-          <p className="mb-2">New to our platform? No registration needed!</p>
-          <p className="text-xs">We will not send or store your private key.</p>
+          <p className="mb-2">
+            Sign in securely with Passkey — no passwords or private keys needed.
+          </p>
+          <p className="text-xs text-gray-500">
+            Your Passkey is stored on your device and never sent to our servers.
+          </p>
         </div>
       </DialogContent>
     </Dialog>

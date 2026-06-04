@@ -3,47 +3,25 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useAuth } from "@/features/auth/components/auth-context";
+import { Fingerprint, UserPlus } from "lucide-react";
 
 interface LoginFormProps {
   onSuccess?: () => void;
 }
 
 export function LoginForm({ onSuccess }: LoginFormProps) {
-  const [formData, setFormData] = useState({
-    privateKey: "",
-  });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
-  const { loginWithWallet } = useAuth();
+  const { login, register } = useAuth();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleLogin = async () => {
     setIsLoading(true);
     setError("");
 
     try {
-      // Validate private key format client-side
-      if (!formData.privateKey.trim()) {
-        setError("Private key is required");
-        setIsLoading(false);
-        return;
-      }
-
-      // Basic validation - let server handle detailed validation
-      if (formData.privateKey.length < 64) {
-        setError(
-          "Private key should be at least 64 characters (32 bytes in hex)",
-        );
-        setIsLoading(false);
-        return;
-      }
-
-      await loginWithWallet(formData.privateKey);
-
-      // Success - user state is automatically updated by auth context
+      await login();
       if (onSuccess) {
         onSuccess();
       } else {
@@ -56,43 +34,50 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
+  const handleRegister = async () => {
+    setIsLoading(true);
+    setError("");
+
+    try {
+      await register();
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        router.push("/");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Registration failed");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label
-          htmlFor="privateKey"
-          className="mb-1 block text-sm font-medium text-gray-700"
-        >
-          Private Key
-        </label>
-        <Input
-          id="privateKey"
-          name="privateKey"
-          type="password"
-          required
-          value={formData.privateKey}
-          onChange={handleChange}
-          placeholder="Enter your private key (64 hex characters)"
+    <div className="space-y-4">
+      <div className="space-y-3">
+        <Button
+          onClick={handleRegister}
           disabled={isLoading}
-          className="font-mono text-sm"
-        />
-        <p className="mt-1 text-xs text-gray-500">
-          Your private key will be stored locally for automatic login. Your account will be created automatically using your public key.
-        </p>
+          className="w-full"
+          size="lg"
+        >
+          <UserPlus className="mr-2 h-4 w-4" />
+          {isLoading ? "Creating account..." : "Create New Account"}
+        </Button>
+
+        <Button
+          onClick={handleLogin}
+          disabled={isLoading}
+          variant="outline"
+          className="w-full"
+          size="lg"
+        >
+          <Fingerprint className="mr-2 h-4 w-4" />
+          {isLoading ? "Authenticating..." : "Already have an account, Sign In"}
+        </Button>
       </div>
 
       {error && <div className="text-sm text-red-600">{error}</div>}
-
-      <Button type="submit" disabled={isLoading} className="w-full">
-        {isLoading ? "Signing in..." : "Sign In"}
-      </Button>
-    </form>
+    </div>
   );
 }

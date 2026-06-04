@@ -5,7 +5,7 @@ import { useAuth } from "@/features/auth/components/auth-context";
 import { InfoCard } from "@/components/shared/info-card";
 
 export const ProfileSettings: React.FC = () => {
-  const { user, ckbAddress, ckbBalance, isCkbLoading } = useAuth();
+  const { user, ckbAddress, fiberNode } = useAuth();
 
   return (
     <div className="w-full max-w-none h-[600px] overflow-y-scroll p-8">
@@ -44,8 +44,8 @@ export const ProfileSettings: React.FC = () => {
                 )
               },
               {
-                label: "Public Key",
-                value: user.public_key || "N/A",
+                label: "CKB Address",
+                value: user.ckbAddress || "N/A",
                 className: "font-mono break-all max-w-xs text-right"
               }
             ]}
@@ -56,26 +56,33 @@ export const ProfileSettings: React.FC = () => {
             title="CKB Address"
             items={[
               {
-                label: "Address", 
-                value: ckbAddress || (isCkbLoading ? "Loading..." : "No address available"),
+                label: "Address",
+                value: ckbAddress || "No address available",
                 className: "font-medium break-all max-w-xs text-right"
               },
               {
                 label: "Balance",
-                value: `${ckbBalance || "0"} CKB`,
+                value: fiberNode.onChainBalance || "0",
                 className: "font-semibold"
               }
             ]}
           />
 
-          {/* Server Information Section */}
+          {/* Node Information Section */}
           <InfoCard
-            title="Server Information"
+            title="Node Information"
             items={[
               {
-                label: "Server Public Key",
-                value: user?.serverPublicKey || "No server public key available",
-                className: "font-medium break-all max-w-xs text-right"
+                label: "Fiber Node",
+                value: fiberNode.isConnected ? "Connected" : "Disconnected",
+              },
+              {
+                label: "Channels",
+                value: `${fiberNode.channels.length} channel(s)`,
+              },
+              {
+                label: "Available Balance",
+                value: fiberNode.availableBalance,
               }
             ]}
           />

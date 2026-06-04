@@ -19,75 +19,34 @@ import { Button } from "@/components/ui/button";
 import { UserDropdown } from "@/components/shared/user-dropdown";
 
 export const Assistant = () => {
-  const { user, logout } = useAuth();
+  const { isAuthenticated, user, logout } = useAuth();
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [pendingMessage, setPendingMessage] = useState('');
   const [showUserSettings, setShowUserSettings] = useState(false);
   const [userSettingsTab, setUserSettingsTab] = useState<'profile' | 'usage' | 'billing' | 'recharge'>('profile');
 
-  // Handle chunk payment data from streaming response
-  const handleChunkPaymentData = async (dataPart: { type: `data-${string}`; id?: string; data: unknown }) => {
-    
-    if (dataPart.type === 'data-chunk-payment') {
-      const data = dataPart.data as { 
-        chunkId: string; 
-        tokens: number; 
-        sessionId: string; 
-        isPaid: boolean;
-        cumulativePayment: number;
-        remainingBalance: number;
-        channelId: string;
-        channelTotalAmount: number;
-      };
-      const { chunkId, tokens, cumulativePayment, remainingBalance, channelId, channelTotalAmount } = data;
-      
-      // Emit consolidated event for chunk-aware-composer and token monitor
-      const chunkPaymentUpdateEvent = new CustomEvent('chunkPaymentUpdate', {
-        detail: {
-          chunkId,
-          tokens,
-          timestamp: new Date().toISOString(),
-          cumulativePayment,
-          remainingBalance,
-          channelId,
-          channelTotalAmount,
-          isArrival: true
-        }
+  // Handle invoice payment data from streaming response
+  const handleInvoiceData = async (dataPart: { type: `data-${string}`; id?: string; data: unknown }) => {
+    // The chat route sends 'data-invoice-request' / 'data-invoice-failed' events
+    const eventType = dataPart.type.slice(5); // Remove 'data-' prefix
+    const data = dataPart.data as Record<string, unknown>;
+    if (data && typeof data === 'object') {
+      const event = new CustomEvent('assistant-ui-data', {
+        detail: { type: eventType, data },
       });
-      window.dispatchEvent(chunkPaymentUpdateEvent);
-      
-    }
-
-    // Handle payment error (402 - insufficient balance)
-    if (dataPart.type === 'data-payment-error') {
-      const data = dataPart.data as {
-        error: string;
-        remainingBalance: number;
-        cumulativePayment: number;
-        channelId: string;
-      };
-      
-      // Emit payment error event for other components
-      const paymentErrorEvent = new CustomEvent('paymentError', {
-        detail: {
-          error: data.error,
-          remainingBalance: data.remainingBalance,
-          cumulativePayment: data.cumulativePayment,
-          channelId: data.channelId,
-          timestamp: new Date().toISOString()
-        }
-      });
-      window.dispatchEvent(paymentErrorEvent);
-      
-      // Open recharge dialog for user to top up
-      setUserSettingsTab('recharge');
-      setShowUserSettings(true);
+      window.dispatchEvent(event);
     }
   };
 
   const runtime = useChatRuntime({
     transport: new AssistantChatTransport({
       api: "/api/chat",
+      headers: () => {
+        const address = typeof window !== 'undefined' 
+          ? localStorage.getItem('dapp2-ckb-address') 
+          : null;
+        return address ? { 'X-CKB-Address': address } : {};
+      },
       fetch: async (input, init) => {
         const response = await fetch(input, init);
         // Handle 402 Payment Required
@@ -110,7 +69,7 @@ export const Assistant = () => {
         return response;
       }
     }),
-    onData: handleChunkPaymentData
+    onData: handleInvoiceData
   });
 
   const handleAuthRequired = () => {
@@ -154,24 +113,39 @@ export const Assistant = () => {
                 <SidebarTrigger />
                 {/* Auth Section - Right side */}
                 <div className="ml-auto">
-                  {user ? (
-                    // User is logged in - show user dropdown menu
+                  {isAuthenticated ? (
+                  // User is authenticated (Fiber node is ready) – show user dropdown or indicator
+                  user ? (
                     <UserDropdown 
                       user={user}
                       onMenuClick={handleUserMenuClick}
                       onLogout={logout}
                     />
                   ) : (
-                    // User not logged in - show login button
+                    // Authenticated but server sync pending – show minimal indicator
                     <Button 
-                      onClick={() => {
-                        setShowAuthDialog(true);
-                      }}
+                      variant="ghost" 
                       size="sm"
+                      className="flex items-center space-x-2"
+                      onClick={() => handleUserMenuClick('profile')}
                     >
-                      Sign in
+                      <div className="w-6 h-6 bg-black rounded-full flex items-center justify-center">
+                        <span className="text-white text-xs font-medium">✓</span>
+                      </div>
+                      <span className="text-sm">Connected</span>
                     </Button>
-                  )}
+                  )
+                ) : (
+                  // User not authenticated – show login button
+                  <Button 
+                    onClick={() => {
+                      setShowAuthDialog(true);
+                    }}
+                    size="sm"
+                  >
+                    Sign in
+                  </Button>
+                )}
                 </div>
               </header>
               <div className="flex-1 overflow-hidden relative">

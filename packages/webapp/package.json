@@ -15,9 +15,9 @@
   "dependencies": {
     "@ai-sdk/openai": "^2.0.27",
     "@ai-sdk/openai-compatible": "^1.0.18",
-    "@assistant-ui/react": "^0.11.0",
+    "@assistant-ui/react": "^0.11.58",
     "@assistant-ui/react-ai-sdk": "^1.1.0",
-    "@assistant-ui/react-markdown": "^0.11.0",
+    "@assistant-ui/react-markdown": "^0.11.10",
     "@fiber-pay/sdk": "^0.2.3",
     "@nervosnetwork/ckb-sdk-utils": "^0.109.5",
     "@nervosnetwork/fiber-js": "^0.8.1",

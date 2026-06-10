@@ -1,2 +1,9 @@
 packages:
-  - 'packages/*'
+  - "packages/*"
+onlyBuiltDependencies:
+  - better-sqlite3
+  - esbuild
+  - secp256k1
+  - sharp
+  - sqlite3
+  - unrs-resolver

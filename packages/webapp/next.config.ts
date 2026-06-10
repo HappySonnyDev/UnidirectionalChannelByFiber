@@ -2,11 +2,11 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   eslint: {
-    // 在生产构建时忽略 ESLint 错误
+    // Ignore ESLint errors during production build
     ignoreDuringBuilds: true,
   },
   typescript: {
-    // 在生产构建时忽略 TypeScript 类型错误
+    // Ignore TypeScript type errors during production build
     ignoreBuildErrors: true,
   },
   transpilePackages: ['@fiber-pay/sdk', '@nervosnetwork/fiber-js'],
@@ -19,7 +19,7 @@ const nextConfig: NextConfig = {
     return config
   },
   async headers() {
-    // 开发环境启用 cross-origin isolation（SharedArrayBuffer 需要）
+    // Enable cross-origin isolation in dev (required for SharedArrayBuffer)
     if (process.env.NODE_ENV !== 'development') return []
     return [{
       source: '/:path*',

@@ -16,23 +16,12 @@ export async function POST(request: NextRequest) {
     const authService = new AuthService();
     const { user } = await authService.loginWithCkbAddress(ckbAddress);
 
-    // Get user's active payment channel
-    const activeChannel = authService.getActivePaymentChannel(user.id);
-
     const userData = {
       id: user.id,
       created_at: user.created_at,
       is_active: Boolean(user.is_active),
       ckbAddress,
       username: user.username,
-      active_channel: activeChannel
-        ? {
-            channelId: activeChannel.channel_id,
-            fundingAmount: activeChannel.funding_amount,
-            userAddress: activeChannel.user_address,
-            status: activeChannel.status,
-          }
-        : null,
     };
 
     // No cookie needed – auth is via X-CKB-Address header

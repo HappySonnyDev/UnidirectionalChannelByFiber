@@ -308,7 +308,7 @@ export const generateCkbSecp256k1SignatureWithSince = (
 export const jsonStr = (obj: unknown, replacer?: ((key: string, value: unknown) => unknown) | null, space?: string | number) => {
   const customReplacer = (key: string, value: unknown) => {
     if (typeof value === "bigint") {
-      return value.toString(); // 或者 return Number(value)（注意精度！）
+      return value.toString(); // or return Number(value) (watch out for precision!)
     }
     // If a custom replacer is provided, apply it after bigint handling
     return replacer ? replacer(key, value) : value;

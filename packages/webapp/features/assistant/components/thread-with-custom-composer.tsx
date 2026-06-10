@@ -36,7 +36,7 @@ interface ThreadWithCustomComposerProps {
   pendingMessage: string;
   setPendingMessage: (message: string) => void;
   onNewQuestion: () => string;
-  onOpenSettings: (tab: 'recharge') => void; // Add callback to open settings
+  onOpenSettings: (tab: 'recharge' | 'usage') => void; // Add callback to open settings
 }
 
 const ThreadScrollToBottom: React.FC = () => {

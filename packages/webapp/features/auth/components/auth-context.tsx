@@ -57,7 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     merchantPubkey: FIBER_CONFIG.MERCHANT_PUBKEY,
     merchantMultiaddr: FIBER_CONFIG.MERCHANT_MULTIADDR,
     network: FIBER_CONFIG.NETWORK,
-    autoConnect: true,
+    autoConnect: false,
   });
 
   const [user, setUser] = useState<User | null>(null);
@@ -121,13 +121,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Initial load – check if we have a stored CKB address (already logged in)
   // -----------------------------------------------------------------------
   useEffect(() => {
-    const stored = getStoredCkbAddress();
-    if (!stored) {
-      // No previous session – wait for user to login/register
-      setIsLoading(false);
-    }
-    // If there is a stored address, the Fiber node's autoConnect will
-    // pick it up and the effect above will sync the user.
+    // When autoConnect is disabled, always resolve loading immediately
+    // since we won't wait for WASM connection
+    setIsLoading(false);
   }, []);
 
   // -----------------------------------------------------------------------
@@ -136,13 +132,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   /** Login with an existing Passkey (PasskeyCredentialProvider handles auth) */
   const login = useCallback(async () => {
-    setIsLoading(true);
     try {
       await fiberNode.connect();
       // User sync happens via the effect above once isNodeReady becomes true
     } catch (err) {
       console.error("[AuthProvider] Login failed:", err);
-      setIsLoading(false);
       throw err;
     }
   }, [fiberNode]);
@@ -150,13 +144,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   /** Register a new Passkey + connect Fiber node */
   const register = useCallback(
     async (displayName?: string) => {
-      setIsLoading(true);
       try {
         await fiberNode.connect(displayName || "AI Assistant User");
         // User sync happens via the effect above once isNodeReady becomes true
       } catch (err) {
         console.error("[AuthProvider] Registration failed:", err);
-        setIsLoading(false);
         throw err;
       }
     },

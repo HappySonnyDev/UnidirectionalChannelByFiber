@@ -4,78 +4,72 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/components/auth-context";
-import { Fingerprint, UserPlus } from "lucide-react";
+import { Fingerprint } from "lucide-react";
 
 interface LoginFormProps {
   onSuccess?: () => void;
+  onLoadingChange?: (loading: boolean) => void;
 }
 
-export function LoginForm({ onSuccess }: LoginFormProps) {
+export function LoginForm({ onSuccess, onLoadingChange }: LoginFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
   const { login, register } = useAuth();
 
-  const handleLogin = async () => {
-    setIsLoading(true);
-    setError("");
-
-    try {
-      await login();
-      if (onSuccess) {
-        onSuccess();
-      } else {
-        router.push("/");
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed");
-    } finally {
-      setIsLoading(false);
+  const handleSuccess = () => {
+    if (onSuccess) {
+      onSuccess();
+    } else {
+      router.push("/");
     }
   };
 
-  const handleRegister = async () => {
+  const handlePasskeyAuth = async () => {
     setIsLoading(true);
+    onLoadingChange?.(true);
     setError("");
 
     try {
-      await register();
-      if (onSuccess) {
-        onSuccess();
+      // Try login with existing Passkey first
+      await login();
+      handleSuccess();
+    } catch (loginErr: any) {
+      // If no existing credentials found, fall back to registration
+      const errMsg = loginErr?.message || "";
+      if (
+        errMsg.includes("No credentials") ||
+        errMsg.includes("not found") ||
+        errMsg.includes("NotAllowedError") ||
+        errMsg.includes("No matching") ||
+        errMsg.includes("not configured")
+      ) {
+        try {
+          await register();
+          handleSuccess();
+        } catch (registerErr: any) {
+          setError(registerErr?.message || "Authentication failed");
+        }
       } else {
-        router.push("/");
+        setError(errMsg || "Authentication failed");
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Registration failed");
     } finally {
       setIsLoading(false);
+      onLoadingChange?.(false);
     }
   };
 
   return (
     <div className="space-y-4">
-      <div className="space-y-3">
-        <Button
-          onClick={handleRegister}
-          disabled={isLoading}
-          className="w-full"
-          size="lg"
-        >
-          <UserPlus className="mr-2 h-4 w-4" />
-          {isLoading ? "Creating account..." : "Create New Account"}
-        </Button>
-
-        <Button
-          onClick={handleLogin}
-          disabled={isLoading}
-          variant="outline"
-          className="w-full"
-          size="lg"
-        >
-          <Fingerprint className="mr-2 h-4 w-4" />
-          {isLoading ? "Authenticating..." : "Already have an account, Sign In"}
-        </Button>
-      </div>
+      <Button
+        onClick={handlePasskeyAuth}
+        disabled={isLoading}
+        className="w-full"
+        size="lg"
+      >
+        <Fingerprint className="mr-2 h-4 w-4" />
+        {isLoading ? "Authenticating..." : "Sign In with Passkey"}
+      </Button>
 
       {error && <div className="text-sm text-red-600">{error}</div>}
     </div>

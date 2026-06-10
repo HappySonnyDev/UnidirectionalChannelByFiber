@@ -8,16 +8,12 @@ const publicRoutes = [
   '/api/auth/register', 
   '/api/auth/me', // Allow /me to handle its own auth logic
   '/api/auth/logout',
-  '/api/admin/auto-settle-expiring', // Cron job endpoint
-  '/api/admin/check-expired-channels', // Cron job endpoint
 ];
 
 // Define protected routes that require authentication
 const protectedRoutes = [
   '/api/chat',
-  '/api/channel',
-  '/api/chunks',
-  '/api/session',
+  '/api/invoices',
   '/api/admin',
   '/dashboard',
   '/profile'

@@ -45,11 +45,5 @@ export const FIBER_CONFIG = {
     
     // Invoice expiry in seconds
     INVOICE_EXPIRY: 3600, // 1 hour
-    
-    // Channel reserve amount (protocol already handles reserve in local_balance)
-    CHANNEL_RESERVE_SHANNON: BigInt(0), // Fiber node already deducts reserve at protocol level
-    
-    // Minimum channel funding amount (must be > reserve)
-    MIN_FUNDING_SHANNON: BigInt(20_000_000_000), // 200 CKB minimum
   },
 } as const;

@@ -1,14 +1,14 @@
 import { NextResponse } from 'next/server';
 import { getUserFromRequest } from '@/lib/server/auth';
-import { ChunkPaymentRepository } from '@/lib/server/database';
 import { FIBER_CONFIG } from '@/lib/config';
 
 /**
  * POST /api/invoices/create
  *
- * Core new API for Fiber payment flow:
- * Calls the merchant fnn node's `new_invoice` RPC to generate an invoice,
- * then records it in the database.
+ * Calls the merchant fnn node's `new_invoice` RPC to generate an invoice.
+ *
+ * Input:  { amount?, description? }
+ * Output: { success, invoice, payment_hash, amount }
  */
 export async function POST(request: Request) {
   try {
@@ -17,14 +17,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { amount, description, session_id, channel_id } = await request.json();
-
-    if (!amount) {
-      return NextResponse.json(
-        { error: 'amount is required' },
-        { status: 400 },
-      );
-    }
+    const body = await request.json();
+    const amount = body.amount || String(FIBER_CONFIG.PAYMENT.CHUNK_PRICE_SHANNON);
+    const description = body.description || 'AI assistant payment';
 
     // Call merchant Fiber node new_invoice RPC
     const response = await fetch(FIBER_CONFIG.MERCHANT_NODE_RPC, {
@@ -36,7 +31,7 @@ export async function POST(request: Request) {
         params: [{
           amount: '0x' + BigInt(amount).toString(16),
           currency: FIBER_CONFIG.INVOICE_CURRENCY,
-          description: description || 'AI assistant payment',
+          description,
           expiry: '0x' + FIBER_CONFIG.PAYMENT.INVOICE_EXPIRY.toString(16),
         }],
         id: 1,
@@ -55,17 +50,6 @@ export async function POST(request: Request) {
 
     const invoice = data.result.invoice_address;
     const payment_hash = data.result.invoice?.data?.payment_hash;
-
-    // Record in database
-    const chunkRepo = new ChunkPaymentRepository();
-    chunkRepo.createChunkPayment({
-      session_id: session_id || `session_${Date.now()}`,
-      channel_id: channel_id || undefined,
-      invoice,
-      payment_hash,
-      amount: String(amount),
-      status: 'pending' as const,
-    });
 
     return NextResponse.json({
       success: true,

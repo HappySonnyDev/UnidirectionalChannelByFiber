@@ -9,7 +9,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useAuth } from "@/features/auth/components/auth-context";
-import { FIBER_CONFIG } from "@/lib/config";
 import {
   Loader2,
   Copy,
@@ -24,7 +23,7 @@ import {
 // ---------------------------------------------------------------------------
 
 const SHANNON_PER_CKB = 100_000_000;
-const CHANNEL_RESERVE_CKB = Number(FIBER_CONFIG.PAYMENT.CHANNEL_RESERVE_SHANNON) / SHANNON_PER_CKB;
+const CHANNEL_RESERVE_CKB = 99; // Fiber protocol reserve
 
 /** Convert shannon string → CKB display string (2 decimal places) */
 function shannonToCkb(shannon: string): string {
@@ -36,8 +35,7 @@ function shannonToCkb(shannon: string): string {
 function channelAvailableCkb(ch: Channel): string {
   const local = BigInt(ch.local_balance);
   const offered = BigInt(ch.offered_tlc_balance);
-  const reserve = BigInt(FIBER_CONFIG.PAYMENT.CHANNEL_RESERVE_SHANNON);
-  const available = local - offered - reserve;
+  const available = local - offered; // reserve already deducted by Fiber protocol
   return available > BigInt(0)
     ? (Number(available) / SHANNON_PER_CKB).toFixed(2)
     : "0.00";
@@ -64,7 +62,7 @@ function getStateConfig(stateName: string): {
 
   if (name === ChannelState.ChannelReady) {
     return {
-      label: "就绪",
+      label: "Ready",
       dotClass: "bg-green-500",
       badgeClass: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
     };
@@ -77,21 +75,21 @@ function getStateConfig(stateName: string): {
     name === ChannelState.SigningCommitment
   ) {
     return {
-      label: "等待确认",
+      label: "Awaiting Confirmation",
       dotClass: "bg-amber-400",
       badgeClass: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
     };
   }
   if (name === ChannelState.ShuttingDown) {
     return {
-      label: "关闭中",
+      label: "Closing",
       dotClass: "bg-red-500",
       badgeClass: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
     };
   }
   if (name === ChannelState.Closed) {
     return {
-      label: "已关闭",
+      label: "Closed",
       dotClass: "bg-slate-400",
       badgeClass: "bg-slate-100 text-slate-800 dark:bg-slate-900/30 dark:text-slate-400",
     };
@@ -129,14 +127,53 @@ export const PaymentChannelSettings: React.FC = () => {
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Auto-refresh channels every 30s when connected
+  // Initial loading: avoid flashing "No channels" before WASM data arrives
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+
+  // Mount: refresh channels and resolve initial loading once done
+  useEffect(() => {
+    if (!isConnected) {
+      setIsInitialLoading(false);
+      return;
+    }
+    // If channels already populated (e.g. cached), skip loading
+    if (channels.length > 0) {
+      setIsInitialLoading(false);
+      return;
+    }
+    // Wait for refreshChannels to complete before showing content
+    refreshChannels()
+      .catch(() => {})
+      .finally(() => setIsInitialLoading(false));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Also clear loading as soon as channels arrive
+  useEffect(() => {
+    if (channels.length > 0) {
+      setIsInitialLoading(false);
+    }
+  }, [channels]);
+
+  // Auto-refresh channels: 10s when there are pending channels, 30s otherwise
   useEffect(() => {
     if (!isConnected) return;
+
+    const hasPendingChannel = channels.some(
+      (ch) =>
+        ch.state?.state_name === ChannelState.AwaitingChannelReady ||
+        ch.state?.state_name === ChannelState.AwaitingTxSignatures ||
+        ch.state?.state_name === ChannelState.NegotiatingFunding ||
+        ch.state?.state_name === ChannelState.CollaboratingFundingTx ||
+        ch.state?.state_name === ChannelState.SigningCommitment,
+    );
+
+    const intervalMs = hasPendingChannel ? 10_000 : 30_000;
+
     const interval = setInterval(() => {
       refreshChannels().catch(() => {});
-    }, 30_000);
+    }, intervalMs);
     return () => clearInterval(interval);
-  }, [isConnected, refreshChannels]);
+  }, [isConnected, refreshChannels, channels]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -150,7 +187,7 @@ export const PaymentChannelSettings: React.FC = () => {
   };
 
   const handleCloseChannel = async (channelId: string) => {
-    if (!confirm("关闭通道后，剩余余额将返还到您的链上地址。确认关闭？")) return;
+    if (!confirm("After closing the channel, the remaining balance will be returned to your on-chain address. Confirm close?")) return;
 
     try {
       setActionLoading(channelId);
@@ -160,7 +197,7 @@ export const PaymentChannelSettings: React.FC = () => {
     } catch (err) {
       console.error("Close channel error:", err);
       const msg = err instanceof Error ? err.message : "Unknown error";
-      setError(`关闭通道失败: ${msg}`);
+      setError(`Failed to close channel: ${msg}`);
     } finally {
       setActionLoading(null);
     }
@@ -185,14 +222,14 @@ export const PaymentChannelSettings: React.FC = () => {
   };
 
   // Not connected state
-  if (!isConnected) {
+  if (!isConnected && channels.length === 0) {
     return (
       <div className="h-[600px] w-full max-w-none p-8">
-        <h3 className="mb-6 text-lg font-semibold">支付通道</h3>
+        <h3 className="mb-6 text-lg font-semibold">Payment Channel</h3>
         <div className="rounded-lg border border-slate-200 bg-slate-50 p-6 text-center dark:border-slate-700 dark:bg-slate-800">
           <Wallet className="mx-auto mb-3 h-10 w-10 text-slate-400" />
           <p className="text-sm text-slate-600 dark:text-slate-400">
-            请先登录连接节点，以查看支付通道信息
+            Please log in and connect to the node to view payment channel information
           </p>
         </div>
       </div>
@@ -204,7 +241,7 @@ export const PaymentChannelSettings: React.FC = () => {
       <div className="h-[600px] w-full max-w-none overflow-y-scroll p-8">
         {/* Header */}
         <div className="mb-6 flex items-center justify-between">
-          <h3 className="text-lg font-semibold">支付通道</h3>
+          <h3 className="text-lg font-semibold">Payment Channel</h3>
           <Button
             variant="outline"
             size="sm"
@@ -213,7 +250,7 @@ export const PaymentChannelSettings: React.FC = () => {
             className="gap-1.5"
           >
             <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? "animate-spin" : ""}`} />
-            刷新
+            Refresh
           </Button>
         </div>
 
@@ -221,7 +258,7 @@ export const PaymentChannelSettings: React.FC = () => {
         <div className="mb-6 rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
           <div className="flex items-center justify-between">
             <span className="text-sm text-slate-600 dark:text-slate-400">
-              通道总可用余额
+              Total Available Channel Balance
             </span>
             <span className="text-xl font-bold text-slate-900 dark:text-slate-100">
               {availableBalance}
@@ -235,7 +272,7 @@ export const PaymentChannelSettings: React.FC = () => {
             <div className="mb-2 flex items-center gap-2">
               <Wallet className="h-4 w-4 text-slate-500" />
               <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                节点 CKB 地址（链上充值用）
+                Node CKB Address (for on-chain deposit)
               </span>
             </div>
             <div className="flex items-center gap-2">
@@ -256,7 +293,7 @@ export const PaymentChannelSettings: React.FC = () => {
               </Button>
             </div>
             <p className="mt-2 text-xs text-slate-500 dark:text-slate-500">
-              链上余额: {onChainBalance}
+              On-chain Balance: {onChainBalance}
             </p>
           </div>
         )}
@@ -270,10 +307,15 @@ export const PaymentChannelSettings: React.FC = () => {
         )}
 
         {/* Channel list */}
-        {channels.length === 0 ? (
+        {isInitialLoading ? (
+          <div className="flex items-center justify-center rounded-lg border border-slate-200 bg-slate-50 py-12 dark:border-slate-700 dark:bg-slate-800">
+            <RefreshCw className="h-5 w-5 animate-spin text-slate-400" />
+            <span className="ml-2 text-sm text-slate-500">Loading channel data...</span>
+          </div>
+        ) : channels.length === 0 ? (
           <div className="rounded-lg border border-slate-200 bg-slate-50 p-6 text-center dark:border-slate-700 dark:bg-slate-800">
             <p className="text-sm text-slate-600 dark:text-slate-400">
-              暂无支付通道。请前往「充值」页面开通您的第一个通道。
+              No payment channels yet. Please go to the "Recharge" page to open your first channel.
             </p>
           </div>
         ) : (
@@ -324,7 +366,7 @@ export const PaymentChannelSettings: React.FC = () => {
 
                         {/* Available balance */}
                         <span className="text-sm text-slate-600 dark:text-slate-400">
-                          可用: {channelAvailableCkb(ch)} CKB
+                          Available: {channelAvailableCkb(ch)} CKB
                         </span>
                       </div>
 
@@ -346,7 +388,7 @@ export const PaymentChannelSettings: React.FC = () => {
                             {isClosing ? (
                               <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
                             ) : null}
-                            关闭通道
+                            Close Channel
                           </Button>
                         )}
                       </div>
@@ -358,7 +400,7 @@ export const PaymentChannelSettings: React.FC = () => {
                       stateName !== ChannelState.ShuttingDown && (
                         <div className="mt-2 flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400">
                           <Loader2 className="h-3 w-3 animate-spin" />
-                          <span>通道正在等待链上确认，请稍候...</span>
+                          <span>Channel is awaiting on-chain confirmation, please wait...</span>
                         </div>
                       )}
                   </div>
@@ -370,8 +412,29 @@ export const PaymentChannelSettings: React.FC = () => {
 
         {/* Footer info */}
         <div className="mt-6 text-xs text-slate-500 dark:text-slate-500">
-          <p>每个通道预留 {CHANNEL_RESERVE_CKB} CKB 作为通道储备金，不可用于支付。</p>
-          <p className="mt-1">通道数据每 30 秒自动刷新，也可手动点击刷新按钮。</p>
+          <p>Each channel reserves {CHANNEL_RESERVE_CKB} CKB as channel reserve, which cannot be used for payments.</p>
+          <p className="mt-1">Channel data refreshes automatically every 10–30 seconds (faster when awaiting confirmation), or click the refresh button manually.</p>
+        </div>
+
+        {/* Channel states guide */}
+        <div className="mt-4 space-y-1 text-xs text-slate-500 dark:text-slate-500">
+          <p>Channel status guide:</p>
+          <p className="flex items-center gap-2">
+            <span className="inline-block h-2 w-2 rounded-full bg-amber-400" />
+            Awaiting Confirmation (AWAITING_LOCKIN) — Channel is being confirmed on-chain
+          </p>
+          <p className="flex items-center gap-2">
+            <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
+            Ready (CHANNEL_READY) — Channel is open and ready for payments
+          </p>
+          <p className="flex items-center gap-2">
+            <span className="inline-block h-2 w-2 rounded-full bg-red-500" />
+            Closing (SHUTTING_DOWN) — Channel is closing
+          </p>
+          <p className="flex items-center gap-2">
+            <span className="inline-block h-2 w-2 rounded-full bg-slate-400" />
+            Closed (CLOSED) — Channel is closed, balance has been returned
+          </p>
         </div>
       </div>
     </TooltipProvider>

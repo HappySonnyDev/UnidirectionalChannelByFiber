@@ -3,8 +3,7 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/components/auth-context";
-import { FIBER_CONFIG } from "@/lib/config";
-import { Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Loader2, AlertCircle, CheckCircle2, Copy, ExternalLink } from "lucide-react";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -33,33 +32,62 @@ const PRESET_AMOUNTS = [
   { value: 1000, label: "1000 CKB" },
 ];
 
-const CHANNEL_RESERVE_CKB = Number(FIBER_CONFIG.PAYMENT.CHANNEL_RESERVE_SHANNON) / SHANNON_PER_CKB; // 99 CKB
-const MIN_FUNDING_CKB = Number(FIBER_CONFIG.PAYMENT.MIN_FUNDING_SHANNON) / SHANNON_PER_CKB; // 200 CKB
+// Fiber protocol reserves ~99 CKB at channel open (not configurable)
+const CHANNEL_RESERVE_CKB = 99; // 99 CKB
+
+// Minimum channel funding amount
+const MIN_FUNDING_CKB = 200; // 200 CKB minimum
 
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
-export const CreatePaymentChannel: React.FC = () => {
+interface CreatePaymentChannelProps {
+  /** Called when a channel is successfully opened */
+  onSuccess?: () => void;
+}
+
+export const CreatePaymentChannel: React.FC<CreatePaymentChannelProps> = ({
+  onSuccess,
+}) => {
   const { fiberNode } = useAuth();
   const [selectedAmount, setSelectedAmount] = useState<number>(200);
-  const [customAmount, setCustomAmount] = useState<string>("");
-  const [isCustom, setIsCustom] = useState(false);
+
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [copied, setCopied] = useState(false);
 
-  const fundingAmount = isCustom ? parseInt(customAmount, 10) || 0 : selectedAmount;
+  const fundingAmount = selectedAmount;
   const availableCkb = fundingAmount - CHANNEL_RESERVE_CKB;
+
+  // Parse on-chain balance for insufficient-funds check
+  const onChainCkb = parseFloat(fiberNode.onChainBalance) || 0;
+  const isInsufficientBalance = onChainCkb < MIN_FUNDING_CKB;
+
+  const copyAddress = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const handleOpenChannel = async () => {
     if (!fiberNode.isConnected) {
-      setError("节点未连接，请先登录");
+      setError("Node not connected, please log in first");
       return;
     }
 
     if (fundingAmount < MIN_FUNDING_CKB) {
-      setError(`最低融资金额为 ${MIN_FUNDING_CKB} CKB`);
+      setError(`Minimum funding amount is ${MIN_FUNDING_CKB} CKB`);
       return;
     }
 
@@ -72,6 +100,8 @@ export const CreatePaymentChannel: React.FC = () => {
       await fiberNode.openChannel(hexAmount);
 
       setSuccess(true);
+      // Notify parent if callback provided
+      onSuccess?.();
       // Reset after brief display
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
@@ -79,11 +109,11 @@ export const CreatePaymentChannel: React.FC = () => {
       const msg = err instanceof Error ? err.message : "Unknown error";
       // Translate common errors
       if (msg.includes("insufficient") || msg.toLowerCase().includes("balance")) {
-        setError("链上余额不足，请先充值到节点地址");
+        setError("Insufficient on-chain balance, please deposit to the node address first");
       } else if (msg.includes("peer")) {
-        setError("无法连接到商户节点，请稍后重试");
+        setError("Unable to connect to merchant node, please try again later");
       } else {
-        setError(`开通通道失败: ${msg}`);
+        setError(`Failed to open channel: ${msg}`);
       }
     } finally {
       setIsCreating(false);
@@ -92,22 +122,10 @@ export const CreatePaymentChannel: React.FC = () => {
 
   const handlePresetSelect = (value: number) => {
     setSelectedAmount(value);
-    setIsCustom(false);
-    setCustomAmount("");
     setError(null);
   };
 
-  const handleCustomToggle = () => {
-    setIsCustom(true);
-    setSelectedAmount(0);
-    setError(null);
-  };
 
-  const handleCustomChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value.replace(/[^0-9]/g, "");
-    setCustomAmount(val);
-    setError(null);
-  };
 
   // Determine button state
   const isButtonDisabled =
@@ -118,74 +136,93 @@ export const CreatePaymentChannel: React.FC = () => {
 
   return (
     <div className="w-full max-w-none p-8">
-      <h3 className="mb-6 text-lg font-semibold">开通支付通道</h3>
+      <h3 className="mb-6 text-lg font-semibold">Open Payment Channel</h3>
 
       {/* Preset amount buttons */}
       <div className="mb-6">
-        <h4 className="mb-3 text-sm font-medium text-slate-900 dark:text-slate-100">
-          选择融资金额
-        </h4>
+        {/* <h4 className="mb-3 text-sm font-medium text-slate-900 dark:text-slate-100">
+          Select funding amount
+        </h4> */}
         <div className="flex flex-wrap gap-3">
           {PRESET_AMOUNTS.map((preset) => (
             <Button
               key={preset.value}
-              variant={!isCustom && selectedAmount === preset.value ? "default" : "outline"}
+              variant={selectedAmount === preset.value ? "default" : "outline"}
               className="min-w-[100px]"
               onClick={() => handlePresetSelect(preset.value)}
             >
               {preset.label}
             </Button>
           ))}
-          <Button
-            variant={isCustom ? "default" : "outline"}
-            className="min-w-[100px]"
-            onClick={handleCustomToggle}
-          >
-            自定义
-          </Button>
         </div>
       </div>
 
-      {/* Custom amount input */}
-      {isCustom && (
-        <div className="mb-6">
-          <div className="flex items-center gap-2">
-            <input
-              type="text"
-              inputMode="numeric"
-              placeholder={`最低 ${MIN_FUNDING_CKB} CKB`}
-              value={customAmount}
-              onChange={handleCustomChange}
-              className="w-48 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm
-                placeholder:text-slate-400 focus:border-slate-500 focus:outline-none
-                dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500"
-            />
-            <span className="text-sm text-slate-600 dark:text-slate-400">CKB</span>
-          </div>
-        </div>
-      )}
 
       {/* Balance hint */}
       <div className="mb-6 rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
         <p className="text-sm text-slate-600 dark:text-slate-400">
-          通道预留 <span className="font-semibold text-slate-900 dark:text-slate-100">{CHANNEL_RESERVE_CKB} CKB</span>，
-          实际可用{" "}
+          Channel reserves <span className="font-semibold text-slate-900 dark:text-slate-100">{CHANNEL_RESERVE_CKB} CKB</span>,
+          available for payments{" "}
           <span className="font-semibold text-slate-900 dark:text-slate-100">
             {availableCkb > 0 ? availableCkb.toFixed(2) : "0.00"} CKB
           </span>
         </p>
-        {fiberNode.onChainBalance && (
-          <p className="mt-1 text-xs text-slate-500 dark:text-slate-500">
-            当前链上余额: {fiberNode.onChainBalance}
-          </p>
-        )}
+        <p className="mt-1 text-xs text-slate-500 dark:text-slate-500">
+          Current on-chain balance: {fiberNode.onChainBalance}
+        </p>
       </div>
+
+      {/* Address & Faucet - always visible */}
+      <div className="mb-6 rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+        <p className="text-sm text-slate-600 dark:text-slate-400">
+          Your CKB deposit address:
+        </p>
+        {fiberNode.ckbAddress && (
+          <div className="flex items-center gap-2 mt-1">
+            <code className="max-w-[320px] truncate rounded bg-slate-100 px-2 py-1 text-xs text-slate-900 dark:bg-slate-800 dark:text-slate-300">
+              {fiberNode.ckbAddress}
+            </code>
+            <button
+              type="button"
+              onClick={() => copyAddress(fiberNode.ckbAddress!)}
+              className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+            >
+              {copied ? (
+                <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+              ) : (
+                <Copy className="h-3.5 w-3.5" />
+              )}
+            </button>
+          </div>
+        )}
+        <a
+          href="https://faucet.nervos.org/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 mt-2 text-sm font-medium text-slate-600 underline decoration-slate-400 hover:text-slate-900 dark:text-slate-400 dark:decoration-slate-600 dark:hover:text-slate-300"
+        >
+          Testnet: Get test tokens via Nervos Faucet
+          <ExternalLink className="h-3.5 w-3.5" />
+        </a>
+      </div>
+
+      {/* Insufficient balance warning */}
+      {isInsufficientBalance && (
+        <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-900/50 dark:bg-amber-900/20">
+          <div className="flex items-start gap-2">
+            <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-600 dark:text-amber-400" />
+            <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
+              Insufficient on-chain balance to open channel
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Status indicators */}
       {!fiberNode.isConnected && (
         <div className="mb-4 flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400">
           <AlertCircle className="h-4 w-4" />
-          <span>节点未连接，请先登录</span>
+          <span>Node not connected, please log in first</span>
         </div>
       )}
 
@@ -199,7 +236,7 @@ export const CreatePaymentChannel: React.FC = () => {
       {success && (
         <div className="mb-4 flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700 dark:border-green-900/50 dark:bg-green-900/20 dark:text-green-400">
           <CheckCircle2 className="h-4 w-4" />
-          <span>通道开通请求已提交，等待链上确认...</span>
+          <span>Channel opening request submitted, awaiting on-chain confirmation...</span>
         </div>
       )}
 
@@ -213,25 +250,12 @@ export const CreatePaymentChannel: React.FC = () => {
         {isCreating ? (
           <span className="flex items-center justify-center gap-2">
             <Loader2 className="h-5 w-5 animate-spin" />
-            开通中...
+            Opening...
           </span>
         ) : (
-          `开通通道 — ${fundingAmount || "—"} CKB`
+          `Open Channel — ${fundingAmount || "—"} CKB`
         )}
       </Button>
-
-      {/* Channel states guide */}
-      <div className="mt-6 space-y-1 text-xs text-slate-500 dark:text-slate-500">
-        <p>通道状态说明：</p>
-        <p className="flex items-center gap-2">
-          <span className="inline-block h-2 w-2 rounded-full bg-amber-400" />
-          等待确认 (AWAITING_LOCKIN) — 通道正在链上确认中
-        </p>
-        <p className="flex items-center gap-2">
-          <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
-          就绪 (CHANNEL_READY) — 通道已开通，可进行支付
-        </p>
-      </div>
     </div>
   );
 };

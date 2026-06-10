@@ -51,7 +51,7 @@ export const UserSettingsDialog: React.FC<UserSettingsDialogProps> = ({
       case "billing":
         return <PaymentChannelSettings />;
       case "recharge":
-        return <RechargeSettings />;
+        return <RechargeSettings onChannelCreated={() => setActiveTab('billing')} />;
       default:
         return null;
     }

@@ -52,7 +52,7 @@ export const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = (
             <div>
               <DataDisplay
                 title="Chunk #"
-                data={`#${selectedRecord.chunkIndex}`}
+                data={`#${selectedRecord.displayIndex ?? selectedRecord.chunkIndex}`}
                 className="mb-0"
               />
             </div>

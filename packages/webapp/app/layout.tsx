@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Spilman Payment Demo With CKB",
+  title: "Fiber Payment Channel",
   description: "",
 };
 

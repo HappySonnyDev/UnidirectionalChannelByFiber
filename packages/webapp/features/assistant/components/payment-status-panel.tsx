@@ -8,10 +8,9 @@ interface PaymentStatusPanelProps {
   paymentChannelInfo: PaymentChannelInfo;
   paymentRecords: PaymentRecord[];
   isStreamingActive: boolean;
-  autoPayEnabled: boolean;
-  onAutoPayChange: (enabled: boolean) => void;
   onRetryPayment: (record: PaymentRecord) => void;
   onShowDetails: (record: PaymentRecord) => void;
+  onOpenUsage?: () => void;
   balanceError: string | null;
 }
 
@@ -19,15 +18,16 @@ export const PaymentStatusPanel: React.FC<PaymentStatusPanelProps> = ({
   paymentChannelInfo,
   paymentRecords,
   isStreamingActive,
-  autoPayEnabled,
-  onAutoPayChange,
   onRetryPayment,
   onShowDetails,
+  onOpenUsage,
   balanceError,
 }) => {
   const totalPaidCkb = shannonToCkbDisplay(paymentChannelInfo.totalPaidShannon);
   const confirmedCount = paymentChannelInfo.confirmedCount;
   const failedCount = paymentChannelInfo.failedCount;
+  const activeChannelId = paymentChannelInfo.activeChannelId;
+  const activeChannelBalance = paymentChannelInfo.activeChannelBalance;
 
   return (
     <div className="px-3 py-2 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
@@ -41,24 +41,24 @@ export const PaymentStatusPanel: React.FC<PaymentStatusPanelProps> = ({
         <div className="flex items-center gap-4">
           {/* Balance & stats */}
           <div className="flex items-center gap-4 text-xs text-gray-600 dark:text-gray-400">
-            <span>Balance: {paymentChannelInfo.availableBalance}</span>
+            {/* Active channel balance — clickable to open Usage dialog */}
+            {activeChannelId ? (
+              <span
+                className="flex items-center gap-1.5 cursor-pointer hover:text-gray-900 dark:hover:text-gray-200 transition-colors"
+                onClick={onOpenUsage}
+                title="Click to view channel details"
+              >
+                <span>Balance: {activeChannelBalance || '0 CKB'}</span>
+              </span>
+            ) : (
+              <span className="text-gray-400 dark:text-gray-500 italic">
+                No active channel
+              </span>
+            )}
             <span>Paid: {totalPaidCkb} ({confirmedCount} invoices)</span>
             {failedCount > 0 && (
               <span className="text-red-500">{failedCount} failed</span>
             )}
-          </div>
-
-          {/* Auto Pay toggle */}
-          <div className="flex items-center gap-2">
-            <label className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={autoPayEnabled}
-                onChange={(e) => onAutoPayChange(e.target.checked)}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 focus:ring-offset-0 focus:ring-2"
-              />
-              <span className="font-medium">Auto Pay</span>
-            </label>
           </div>
         </div>
       </div>
@@ -75,14 +75,18 @@ export const PaymentStatusPanel: React.FC<PaymentStatusPanelProps> = ({
       {paymentRecords.length > 0 ? (
         <div className="space-y-2 max-h-48 overflow-y-auto">
           <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">Invoice Payments:</div>
-          {paymentRecords.map((record) => (
+          {[...paymentRecords]
+            .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+            .map((record, index) => {
+              const seqNumber = paymentRecords.length - index;
+              return (
             <div
-              key={`chunk-${record.chunkIndex}`}
+              key={record.payment_hash}
               className="flex items-center justify-between bg-white dark:bg-gray-800 rounded px-3 py-2 text-xs border border-gray-200 dark:border-gray-600"
             >
               <div className="flex items-center gap-3">
                 <span className="font-mono text-gray-600 dark:text-gray-400">
-                  #{record.chunkIndex}
+                  #{seqNumber}
                 </span>
                 <span className="text-gray-900 dark:text-gray-100 font-medium">
                   {shannonToCkbDisplay(record.amount)}
@@ -144,7 +148,7 @@ export const PaymentStatusPanel: React.FC<PaymentStatusPanelProps> = ({
 
                 {/* Details button */}
                 <Button
-                  onClick={() => onShowDetails(record)}
+                  onClick={() => onShowDetails({ ...record, displayIndex: seqNumber })}
                   size="sm"
                   variant="outline"
                   className="h-6 w-6 p-0 border-gray-300 hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-700"
@@ -153,7 +157,8 @@ export const PaymentStatusPanel: React.FC<PaymentStatusPanelProps> = ({
                 </Button>
               </div>
             </div>
-          ))}
+            );
+            })}
         </div>
       ) : (
         <div className="text-xs text-gray-600 dark:text-gray-400 text-center py-4">

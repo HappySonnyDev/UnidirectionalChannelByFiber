@@ -28,7 +28,7 @@ import {
 interface ChunkAwareComposerProps {
   onAuthRequired: () => void;
   onNewQuestion: () => string;
-  onOpenSettings: (tab: 'recharge') => void;
+  onOpenSettings: (tab: 'recharge' | 'usage') => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -45,12 +45,12 @@ export const ChunkAwareComposer: React.FC<ChunkAwareComposerProps> = ({
   const threadRuntime = useThreadRuntime();
 
   // Payment state
-  const [autoPayEnabled, setAutoPayEnabled] = useState(true);
   const [isStreamingActive, setIsStreamingActive] = useState(false);
   const [paymentRecords, setPaymentRecords] = useState<PaymentRecord[]>([]);
   const [selectedRecord, setSelectedRecord] = useState<PaymentRecord | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [balanceError, setBalanceError] = useState<string | null>(null);
+
 
   // Track active payments to avoid duplicates
   const payingChunks = useRef<Set<number>>(new Set());
@@ -58,6 +58,8 @@ export const ChunkAwareComposer: React.FC<ChunkAwareComposerProps> = ({
   // Derive channel info from fiber node + payment records
   const paymentChannelInfo: PaymentChannelInfo = {
     availableBalance: fiberNode.availableBalance,
+    activeChannelId: fiberNode.activeChannel?.channel_id ?? null,
+    activeChannelBalance: fiberNode.activeChannelBalance,
     totalPaidShannon: String(
       paymentRecords
         .filter(r => r.status === 'confirmed')
@@ -66,6 +68,11 @@ export const ChunkAwareComposer: React.FC<ChunkAwareComposerProps> = ({
     confirmedCount: paymentRecords.filter(r => r.status === 'confirmed').length,
     failedCount: paymentRecords.filter(r => r.status === 'failed').length,
   };
+
+  // Navigate to Usage tab in settings dialog
+  const handleOpenUsage = useCallback(() => {
+    onOpenSettings('usage');
+  }, [onOpenSettings]);
 
   // -----------------------------------------------------------------------
   // Process an invoice-request event
@@ -146,7 +153,7 @@ export const ChunkAwareComposer: React.FC<ChunkAwareComposerProps> = ({
 
         // Create a payment record if it doesn't exist yet
         setPaymentRecords(prev => {
-          if (prev.some(r => r.chunkIndex === invoiceData.chunkIndex)) return prev;
+          if (prev.some(r => r.payment_hash === invoiceData.payment_hash)) return prev;
           return [
             ...prev,
             {
@@ -160,8 +167,8 @@ export const ChunkAwareComposer: React.FC<ChunkAwareComposerProps> = ({
           ];
         });
 
-        // Auto-pay if enabled
-        if (autoPayEnabled && fiberNode.isNodeReady) {
+        // Auto-pay invoice
+        if (fiberNode.isNodeReady) {
           handleInvoiceRequest(invoiceData);
         }
       }
@@ -177,7 +184,7 @@ export const ChunkAwareComposer: React.FC<ChunkAwareComposerProps> = ({
     return () => {
       window.removeEventListener('assistant-ui-data', handleInvoiceRequestEvent as EventListener);
     };
-  }, [autoPayEnabled, fiberNode.isNodeReady, handleInvoiceRequest]);
+  }, [fiberNode.isNodeReady, handleInvoiceRequest]);
 
   // -----------------------------------------------------------------------
   // Monitor streaming state
@@ -198,7 +205,7 @@ export const ChunkAwareComposer: React.FC<ChunkAwareComposerProps> = ({
   //
   // Before retrying, we check the actual payment status on the Fiber node:
   //   - If the payment already succeeded (was marked "failed" prematurely),
-  //     we just confirm it on the server without re-sending.
+  //     we just update local state without re-sending.
   //   - If the payment truly failed, we request a NEW invoice from the server
   //     (Fiber invoices cannot be reused — each invoice can only be paid once).
   // -----------------------------------------------------------------------
@@ -214,13 +221,7 @@ export const ChunkAwareComposer: React.FC<ChunkAwareComposerProps> = ({
 
       if (paymentStatus?.status === 'Success') {
         // Payment actually succeeded — it was marked "failed" prematurely.
-        // Just confirm it on the server and update local state.
-        await fetch(`/api/invoices/${record.payment_hash}/confirm`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ payment_hash: record.payment_hash }),
-        });
-
+        // Just update local state.
         setPaymentRecords(prev =>
           prev.map(r =>
             r.chunkIndex === record.chunkIndex
@@ -311,10 +312,22 @@ export const ChunkAwareComposer: React.FC<ChunkAwareComposerProps> = ({
       return false;
     }
 
+    // Check 4: Channel balance check
+    // Must have at least one CHANNEL_READY channel with available balance
+    const hasReadyChannel = fiberNode.channels?.some(ch =>
+      ch.state?.state_name?.toLowerCase().includes('ready')
+    );
+    const availableCkb = parseFloat(fiberNode.availableBalance);
+
+    if (!hasReadyChannel || isNaN(availableCkb) || availableCkb <= 0) {
+      onOpenSettings('recharge');
+      return false;
+    }
+
     const sessionId = onNewQuestion();
     console.log('[Composer] Pre-send validation passed - session:', sessionId);
     return true;
-  }, [user, fiberNode.isNodeReady, paymentRecords, showPaymentModal, onAuthRequired, onNewQuestion]);
+  }, [user, fiberNode.isNodeReady, fiberNode.channels, fiberNode.availableBalance, paymentRecords, showPaymentModal, onAuthRequired, onNewQuestion, onOpenSettings]);
 
   // -----------------------------------------------------------------------
   // Send handler
@@ -323,8 +336,6 @@ export const ChunkAwareComposer: React.FC<ChunkAwareComposerProps> = ({
     const isValid = await handlePreSendValidation();
     if (!isValid) return;
 
-    // Clear previous payment records for new conversation
-    setPaymentRecords([]);
     setBalanceError(null);
     composerRuntime.send();
   }, [handlePreSendValidation, composerRuntime]);
@@ -349,13 +360,12 @@ export const ChunkAwareComposer: React.FC<ChunkAwareComposerProps> = ({
           paymentChannelInfo={paymentChannelInfo}
           paymentRecords={paymentRecords}
           isStreamingActive={isStreamingActive}
-          autoPayEnabled={autoPayEnabled}
-          onAutoPayChange={setAutoPayEnabled}
           onRetryPayment={handleRetryPayment}
           onShowDetails={(record) => {
             setSelectedRecord(record);
             setShowPaymentModal(false);
           }}
+          onOpenUsage={handleOpenUsage}
           balanceError={balanceError}
         />
       )}
@@ -420,6 +430,7 @@ export const ChunkAwareComposer: React.FC<ChunkAwareComposerProps> = ({
           }}
         />
       )}
+
     </div>
   );
 };

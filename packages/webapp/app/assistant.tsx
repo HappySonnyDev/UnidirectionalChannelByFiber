@@ -5,18 +5,14 @@ import {
   AssistantChatTransport,
 } from "@assistant-ui/react-ai-sdk";
 import { ThreadWithCustomComposer } from "@/features/assistant/components/thread-with-custom-composer";
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
-import { ThreadListSidebar } from "@/features/assistant/components/threadlist-sidebar";
 import { useAuth } from "@/features/auth/components/auth-context";
 import { AuthDialog } from "@/features/auth/components/auth-dialog";
 import { UserSettingsDialog } from "@/features/settings/components/user-settings-dialog";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { UserDropdown } from "@/components/shared/user-dropdown";
+import { ThreadListSidebar } from "@/features/assistant/components/threadlist-sidebar";
 
 export const Assistant = () => {
   const { isAuthenticated, user, logout } = useAuth();
@@ -45,7 +41,7 @@ export const Assistant = () => {
         const address = typeof window !== 'undefined' 
           ? localStorage.getItem('dapp2-ckb-address') 
           : null;
-        return address ? { 'X-CKB-Address': address } : {};
+        return address ? { 'X-CKB-Address': address } : {} as Record<string, string>;
       },
       fetch: async (input, init) => {
         const response = await fetch(input, init);
@@ -146,17 +142,17 @@ export const Assistant = () => {
                     Sign in
                   </Button>
                 )}
-                </div>
-              </header>
-              <div className="flex-1 overflow-hidden relative">
-                <ThreadWithCustomComposer 
-                  onAuthRequired={handleAuthRequired}
-                  pendingMessage={pendingMessage}
-                  setPendingMessage={setPendingMessage}
-                  onNewQuestion={generateNewSessionId}
-                  onOpenSettings={handleUserMenuClick}
-                />
               </div>
+            </header>
+            <div className="flex-1 overflow-hidden relative">
+              <ThreadWithCustomComposer
+                onAuthRequired={handleAuthRequired}
+                pendingMessage={pendingMessage}
+                setPendingMessage={setPendingMessage}
+                onNewQuestion={generateNewSessionId}
+                onOpenSettings={handleUserMenuClick}
+              />
+            </div>
             </SidebarInset>
           </div>
         </SidebarProvider>

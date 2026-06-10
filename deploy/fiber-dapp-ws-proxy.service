@@ -1,0 +1,12 @@
+[Unit]
+Description=Fiber DApp WebSocket Proxy
+After=fiber-dapp-merchant.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/websocat --binary -E "ws-listen:127.0.0.1:18431" "tcp:127.0.0.1:8428"
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

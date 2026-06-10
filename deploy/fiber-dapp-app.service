@@ -1,0 +1,15 @@
+[Unit]
+Description=Fiber DApp Next.js App
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/fiber-dapp/packages/webapp
+ExecStart=/usr/bin/env node_modules/.bin/next start -p 3100
+Environment=NODE_ENV=production
+Environment=NO_PROXY=localhost,127.0.0.1
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

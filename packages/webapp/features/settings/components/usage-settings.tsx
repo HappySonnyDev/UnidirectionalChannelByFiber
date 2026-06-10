@@ -1,8 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Star, Activity, Loader2 } from "lucide-react";
+import React, { useState, useEffect, useMemo } from "react";
+import {
+  Activity,
+  Wallet,
+  ArrowDownRight,
+  Radio,
+  CheckCircle2,
+} from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -10,102 +15,112 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { usePaymentChannels, PaymentChannel } from "@/features/payment/hooks/use-payment-channels";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/components/auth-context";
-import { channel } from "@/lib/client/api";
-import { formatDbTimeToLocal, calculateDaysRemaining, isChannelExpired } from "@/lib/shared/date-utils";
-import { DataDisplay } from "@/components/shared/data-display";
 import { shannonToCkbDisplay } from "@/lib/client/chunk-payment-integration";
 
+/** Convert shannon string to CKB decimal string (without unit suffix) */
+function shannonToCkb(shannon: string | bigint): string {
+  const value = BigInt(shannon);
+  const ckb = Number(value) / 1e8;
+  return ckb.toFixed(2);
+}
+
+/** Map raw channel state to a friendly label + Tailwind color classes */
+function getStateBadge(stateName: string): {
+  label: string;
+  className: string;
+} {
+  const normalized = stateName.toLowerCase();
+  if (normalized.includes("ready")) {
+    return {
+      label: "Ready",
+      className:
+        "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800",
+    };
+  }
+  if (
+    normalized.includes("pending") ||
+    normalized.includes("awaiting") ||
+    normalized.includes("negotiating")
+  ) {
+    return {
+      label: "Pending",
+      className:
+        "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800",
+    };
+  }
+  if (normalized.includes("closing") || normalized.includes("closed")) {
+    return {
+      label: "Closing",
+      className:
+        "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800",
+    };
+  }
+  return {
+    label: stateName,
+    className:
+      "bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700",
+  };
+}
+
 export const UsageSettings: React.FC = () => {
-  const { channels, activeChannels, isLoading, refetch } = usePaymentChannels();
   const { fiberNode } = useAuth();
   const [selectedChannelId, setSelectedChannelId] = useState<string>("");
-  const [actionLoading, setActionLoading] = useState(false);
 
-  // Auto-select default channel when channels are loaded
+  // Filter active channels (CHANNEL_READY state) from WASM Fiber node
+  const activeChannels = useMemo(() => {
+    if (!fiberNode.channels) return [];
+    return fiberNode.channels.filter((ch) =>
+      ch.state.state_name.toLowerCase().includes("ready")
+    );
+  }, [fiberNode.channels]);
+
+  // Auto-select first active channel or sync with global activeChannel
   useEffect(() => {
-    if (channels.length > 0 && !selectedChannelId) {
-      const defaultChannel = channels.find(channel => channel.isDefault && channel.status === 2);
-      if (defaultChannel) {
-        setSelectedChannelId(defaultChannel.channelId);
-      } else {
-        const activeChannel = channels.find(channel => channel.status === 2);
-        if (activeChannel) {
-          setSelectedChannelId(activeChannel.channelId);
-        }
+    if (activeChannels.length > 0 && !selectedChannelId) {
+      const initialId = fiberNode.activeChannel?.channel_id || activeChannels[0].channel_id;
+      setSelectedChannelId(initialId);
+      // Only sync global active channel if there is none set yet
+      if (!fiberNode.activeChannel?.channel_id && activeChannels.length > 0) {
+        fiberNode.setActiveChannelById(activeChannels[0].channel_id);
       }
     }
-  }, [channels, selectedChannelId]);
+  }, [activeChannels, selectedChannelId, fiberNode]);
 
-  const handleSetAsDefault = async (channelId: string) => {
-    try {
-      setActionLoading(true);
-      
-      await channel.setDefault({ channelId });
-      
-      alert('Channel set as default successfully!');
-      await refetch();
-      
-      const defaultChannelChangedEvent = new CustomEvent('defaultChannelChanged', {
-        detail: { channelId }
-      });
-      window.dispatchEvent(defaultChannelChangedEvent);
-    } catch (error) {
-      console.error('Error setting default channel:', error);
-      alert('Failed to set as default: ' + (error instanceof Error ? error.message : 'Unknown error'));
-    } finally {
-      setActionLoading(false);
+  // Keep local selection in sync when global activeChannel changes externally
+  useEffect(() => {
+    if (fiberNode.activeChannel?.channel_id) {
+      setSelectedChannelId(fiberNode.activeChannel.channel_id);
     }
-  };
+  }, [fiberNode.activeChannel?.channel_id]);
 
-  const selectedChannel = channels.find(channel => channel.channelId === selectedChannelId);
+  const isSelectedActive = selectedChannelId === fiberNode.activeChannel?.channel_id;
 
-  // Calculate usage statistics for Fiber channel
-  const getUsageStats = (channel: PaymentChannel) => {
-    const totalTokens = channel.amount * 0.01; // 1 CKB = 0.01 Token conversion
-    const consumedTokens = channel.consumedTokens;
-    const remainingTokens = totalTokens - consumedTokens;
-    const usagePercentage = (consumedTokens / totalTokens) * 100;
-    
-    const daysRemaining = calculateDaysRemaining(channel.verifiedAt || null, channel.durationDays);
-    
-    let timeRemainingDisplay;
-    if (daysRemaining > 0) {
-      timeRemainingDisplay = `${daysRemaining} day${daysRemaining > 1 ? 's' : ''}`;
-    } else if (daysRemaining === 0) {
-      timeRemainingDisplay = 'Less than 1 day';
-    } else {
-      timeRemainingDisplay = 'Expired';
-    }
-    
-    const startDate = new Date(channel.verifiedAt && channel.verifiedAt !== null ? channel.verifiedAt : channel.createdAt);
-    const durationInSeconds = channel.durationSeconds || (channel.durationDays * 24 * 60 * 60);
-    const endDate = new Date(startDate.getTime() + (durationInSeconds * 1000));
-    
-    return {
-      totalTokens,
-      consumedTokens,
-      remainingTokens,
-      usagePercentage,
-      daysRemaining,
-      timeRemainingDisplay,
-      endDate,
-      isExpired: isChannelExpired(channel.verifiedAt || null, channel.durationDays)
-    };
-  };
+  const selectedChannel = activeChannels.find(
+    (ch) => ch.channel_id === selectedChannelId
+  );
 
-  const formatDate = (dateString: string) => {
-    return formatDbTimeToLocal(dateString, 'MMM DD, YYYY');
-  };
-
-  if (isLoading) {
+  // Not connected to WASM node
+  if (!fiberNode.isConnected) {
     return (
-      <div className="w-full max-w-none h-[600px] overflow-y-scroll p-8">
-        <div className="flex items-center justify-center h-full">
-          <p className="text-sm text-slate-600 dark:text-slate-400">
-            Loading usage data...
-          </p>
+      <div className="w-full max-w-none h-[600px] overflow-y-auto p-6">
+        <h3 className="mb-6 text-lg font-semibold text-slate-800 dark:text-slate-200">
+          Usage Statistics
+        </h3>
+        <div className="rounded-xl border border-slate-200 bg-slate-50/50 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+          <div className="p-10 text-center">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-700">
+              <Activity className="h-7 w-7 text-slate-400" />
+            </div>
+            <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              请先连接钱包
+            </p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              连接钱包后才能查看通道使用统计。
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -113,15 +128,19 @@ export const UsageSettings: React.FC = () => {
 
   if (activeChannels.length === 0) {
     return (
-      <div className="w-full max-w-none h-[600px] overflow-y-scroll p-8">
-        <h3 className="mb-6 text-lg font-semibold">Usage Statistics</h3>
-        <div className="rounded-lg border border-gray-100/30 bg-slate-50/50 shadow-sm dark:border-slate-700/40 dark:bg-slate-800">
-          <div className="p-8 text-center">
-            <Activity className="mx-auto h-12 w-12 text-slate-400 mb-4" />
-            <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+      <div className="w-full max-w-none h-[600px] overflow-y-auto p-6">
+        <h3 className="mb-6 text-lg font-semibold text-slate-800 dark:text-slate-200">
+          Usage Statistics
+        </h3>
+        <div className="rounded-xl border border-slate-200 bg-slate-50/50 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+          <div className="p-10 text-center">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-700">
+              <Activity className="h-7 w-7 text-slate-400" />
+            </div>
+            <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
               No active payment channels found.
             </p>
-            <p className="text-xs text-slate-500 dark:text-slate-500">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               Create and activate a payment channel to view usage statistics.
             </p>
           </div>
@@ -130,146 +149,169 @@ export const UsageSettings: React.FC = () => {
     );
   }
 
-  const stats = selectedChannel ? getUsageStats(selectedChannel) : null;
-
   return (
-    <div className="w-full max-w-none h-[600px] overflow-y-scroll p-8">
+    <div className="w-full max-w-none h-[600px] overflow-y-auto p-6">
+      {/* Header */}
       <div className="mb-6 flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Usage Statistics</h3>
-        
-        <div className="flex items-center space-x-3">
+        <div>
+          <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">
+            Usage Statistics
+          </h3>
+          <p className="text-xs text-slate-500 mt-0.5">
+            {activeChannels.length} active channel
+            {activeChannels.length > 1 ? "s" : ""}
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
           <Select value={selectedChannelId} onValueChange={setSelectedChannelId}>
-            <SelectTrigger className="w-54 text-center">
+            <SelectTrigger className="w-56">
               <SelectValue placeholder="Select a channel">
-                {selectedChannelId && (() => {
-                  const channel = activeChannels.find(c => c.channelId === selectedChannelId);
-                  return channel ? (
-                    <span className="flex items-center justify-center gap-1">
-                      <span>...{channel.channelId.slice(-6)} - {channel.amount.toLocaleString()} CKB</span>
-                      {channel.isDefault && <Star className="h-3 w-3" />}
-                    </span>
-                  ) : 'Select a channel';
-                })()}
+                {selectedChannelId &&
+                  (() => {
+                    const ch = activeChannels.find(
+                      (c) => c.channel_id === selectedChannelId
+                    );
+                    return ch ? (
+                      <span className="flex items-center gap-2">
+                        <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                        <span>...{ch.channel_id.slice(-6)}</span>
+                        <span className="text-slate-400">·</span>
+                        <span>{shannonToCkb(ch.local_balance)} CKB</span>
+                      </span>
+                    ) : (
+                      "Select a channel"
+                    );
+                  })()}
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              {activeChannels.map((channel) => (
-                <SelectItem key={channel.channelId} value={channel.channelId}>
-                  <span className="flex items-center gap-1">
-                    <span>...{channel.channelId.slice(-6)} - {channel.amount.toLocaleString()} CKB</span>
-                    {channel.isDefault && <Star className="h-3 w-3" />}
+              {activeChannels.map((ch) => (
+                <SelectItem key={ch.channel_id} value={ch.channel_id}>
+                  <span className="flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                    <span>...{ch.channel_id.slice(-6)}</span>
+                    <span className="text-slate-400">·</span>
+                    <span>{shannonToCkb(ch.local_balance)} CKB</span>
                   </span>
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
+
+          {/* Set as Active button */}
+          {isSelectedActive ? (
+            <Button
+              variant="outline"
+              size="sm"
+              disabled
+              className="h-8 gap-1.5 text-xs text-emerald-600 border-emerald-200 bg-emerald-50 dark:text-emerald-400 dark:border-emerald-800 dark:bg-emerald-900/20"
+            >
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              Active
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 gap-1.5 text-xs"
+              onClick={() => {
+                if (selectedChannelId) {
+                  fiberNode.setActiveChannelById(selectedChannelId);
+                }
+              }}
+            >
+              Use for Payment
+            </Button>
+          )}
         </div>
       </div>
 
-      {selectedChannel && stats && (
+      {selectedChannel && (
         <div className="space-y-6">
-          {/* Channel Info Header */}
-          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
-            <div className="flex items-center justify-between mb-4 min-h-[2.5rem]">
-              <div className="flex items-center space-x-3">
-                <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200">
-                  Channel Overview
-                </h4>
-                {selectedChannel.isDefault && (
-                  <span className="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200">
-                    <Star className="h-3 w-3 mr-1" />
-                    Default
-                  </span>
-                )}
+          {/* Channel Overview Card */}
+          <div className="rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900 overflow-hidden">
+            {/* Card Header */}
+            <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
+              <div className="flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-100 dark:bg-indigo-900/30">
+                  <Radio className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                    Channel Overview
+                  </h4>
+                  <p className="text-[11px] text-slate-500 font-mono">
+                    {selectedChannel.channel_id}
+                  </p>
+                </div>
               </div>
-              
-              <div className="flex items-center min-h-[2rem]">
-                {!selectedChannel.isDefault && (
-                  <Button
-                    onClick={() => handleSetAsDefault(selectedChannel.channelId)}
-                    disabled={actionLoading}
-                    size="sm"
-                    variant="outline"
-                  >
-                    {actionLoading ? 'Setting...' : 'Set as Default'}
-                  </Button>
-                )}
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 text-center">
-              <div className="space-y-2">
-                <p className="text-2xl font-bold text-slate-900 dark:text-white">
-                  {stats.totalTokens.toLocaleString()}
-                </p>
-                <p className="text-sm font-medium tracking-wider text-slate-600 uppercase dark:text-slate-400">Total Tokens</p>
-              </div>
-              <div className="space-y-2">
-                <p className="text-2xl font-bold text-slate-900 dark:text-white">
-                  {stats.remainingTokens.toLocaleString()}
-                </p>
-                <p className="text-sm font-medium tracking-wider text-slate-600 uppercase dark:text-slate-400">Remaining</p>
-              </div>
-              <div className="space-y-2">
-                <p className="text-2xl font-bold text-slate-900 dark:text-slate-300">
-                  {stats.timeRemainingDisplay}
-                </p>
-                <p className="text-sm font-medium tracking-wider text-slate-600 uppercase dark:text-slate-400">Time Left</p>
-              </div>
-              <div className="space-y-2">
-                <p className="text-2xl font-bold text-slate-900 dark:text-slate-300">
-                  {formatDate(stats.endDate.toISOString())}
-                </p>
-                <p className="text-sm font-medium tracking-wider text-slate-600 uppercase dark:text-slate-400">Expires On</p>
-              </div>
-            </div>
-          </div>
 
-          {/* Fiber Balance */}
-          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
-            <div className="mb-4">
-              <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200">
-                Fiber Channel Balance
-              </h4>
+              {/* Node Status */}
+              <div className="flex items-center gap-2">
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
+                <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                  Node Connected
+                </span>
+              </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <DataDisplay
-                title="Available Balance"
-                data={fiberNode.availableBalance}
-                className="mb-0"
-              />
-              <DataDisplay
-                title="Node Status"
-                data={fiberNode.isNodeReady ? 'Connected' : 'Not Connected'}
-                className="mb-0"
-              />
-            </div>
-          </div>
 
-          {/* Usage Progress */}
-          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
-            <div className="mb-4 flex items-center justify-between">
-              <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200">
-                Token Usage
-              </h4>
-              <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                {stats.consumedTokens.toLocaleString()} / {stats.totalTokens.toLocaleString()} tokens
-              </span>
-            </div>
-            
-            <div className="w-full bg-slate-200 rounded-full h-3 mb-2 dark:bg-slate-700">
-              <div 
-                className="bg-slate-600 h-3 rounded-full transition-all duration-300 dark:bg-slate-400" 
-                style={{ width: `${Math.min(stats.usagePercentage, 100)}%` }}
-              ></div>
-            </div>
-            
-            <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400">
-              <span>0</span>
-              <span className="font-medium">
-                {stats.usagePercentage.toFixed(1)}% used
-              </span>
-              <span>{stats.totalTokens.toLocaleString()}</span>
+            <div className="p-6">
+              {/* Status Row */}
+              <div className="flex items-center gap-3 mb-6">
+                <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">
+                  Channel Status
+                </span>
+                {(() => {
+                  const badge = getStateBadge(
+                    selectedChannel.state.state_name
+                  );
+                  return (
+                    <Badge variant="outline" className={badge.className}>
+                      {badge.label}
+                    </Badge>
+                  );
+                })()}
+              </div>
+
+              {/* Balance Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Local Balance */}
+                <div className="group rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 p-4 transition-all hover:border-slate-200 dark:hover:border-slate-700 hover:shadow-sm">
+                  <div className="flex items-center gap-2.5 mb-3">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                      <Wallet className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+                      Local
+                    </span>
+                  </div>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+                    {shannonToCkbDisplay(selectedChannel.local_balance)}
+                  </p>
+                  <p className="text-xs text-slate-400 mt-1 font-medium">
+                    CKB
+                  </p>
+                </div>
+
+                {/* Remote Balance */}
+                <div className="group rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 p-4 transition-all hover:border-slate-200 dark:hover:border-slate-700 hover:shadow-sm">
+                  <div className="flex items-center gap-2.5 mb-3">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-100 dark:bg-violet-900/30">
+                      <ArrowDownRight className="h-4 w-4 text-violet-600 dark:text-violet-400" />
+                    </div>
+                    <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+                      Remote
+                    </span>
+                  </div>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+                    {shannonToCkbDisplay(selectedChannel.remote_balance)}
+                  </p>
+                  <p className="text-xs text-slate-400 mt-1 font-medium">
+                    CKB
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>

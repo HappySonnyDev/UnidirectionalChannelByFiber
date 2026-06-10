@@ -3,7 +3,6 @@ import { NextRequest } from "next/server";
 import {
   UserRepository,
   User,
-  PaymentChannelRepository,
 } from '@/lib/server/database';
 
 // ---------------------------------------------------------------------------
@@ -12,19 +11,8 @@ import {
 
 export class AuthService {
   private userRepo: UserRepository;
-  private channelRepo: PaymentChannelRepository;
-
   constructor() {
     this.userRepo = new UserRepository();
-    this.channelRepo = new PaymentChannelRepository();
-  }
-
-  // Get user's active payment channel (latest active channel for Fiber)
-  getActivePaymentChannel(userId: number) {
-    const user = this.userRepo.getUserById(userId);
-    if (!user || !user.public_key) return null;
-
-    return this.channelRepo.getLatestActiveChannelByUserAddress(user.public_key);
   }
 
   /**

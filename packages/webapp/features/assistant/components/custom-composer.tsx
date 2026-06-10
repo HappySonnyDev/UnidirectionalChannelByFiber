@@ -121,7 +121,7 @@ export const CustomComposer: React.FC<CustomComposerProps> = ({
                     onAuthRequired();
                     return;
                   }
-                  // 直接发送消息，不填入输入框
+                  // Send message directly without filling the input box
                   const event = new CustomEvent('send-message', {
                     detail: { message: suggestedAction.action }
                   });

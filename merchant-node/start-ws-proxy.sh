@@ -19,6 +19,10 @@ fi
 WS_PROXY_LISTEN="${WS_PROXY_LISTEN:-0.0.0.0:8231}"
 WS_PROXY_TARGET="${WS_PROXY_TARGET:-127.0.0.1:8228}"
 FIBER_P2P_PORT="${FIBER_P2P_PORT:-8228}"
+FIBER_WS_PORT="${FIBER_WS_PORT:-8231}"
+
+# Extract listen port for display
+WS_PORT=$(echo "$WS_PROXY_LISTEN" | sed 's/.*:/')
 
 # Get external IP
 EXTERNAL_IP=$(curl -s --connect-timeout 5 ifconfig.me 2>/dev/null || echo "YOUR_PUBLIC_IP")
@@ -31,11 +35,11 @@ echo "Target TCP:       $WS_PROXY_TARGET"
 echo "External IP:      $EXTERNAL_IP"
 echo "======================================"
 echo ""
-echo "For local testing:  ws://127.0.0.1:8231"
-echo "For external access: ws://$EXTERNAL_IP:8231"
+echo "For local testing:  ws://127.0.0.1:${WS_PORT}"
+echo "For external access: ws://$EXTERNAL_IP:${WS_PORT}"
 echo ""
 echo "Add to your webapp .env file:"
-echo "  VITE_FIBER_BOOTNODE=/ip4/$EXTERNAL_IP/tcp/8231/ws"
+echo "  VITE_FIBER_BOOTNODE=/ip4/$EXTERNAL_IP/tcp/${WS_PORT}/ws"
 echo ""
 echo "Press Ctrl+C to stop"
 echo ""
@@ -54,4 +58,4 @@ fi
 # Format: websocat ws-listen:ADDR tcp:HOST:PORT
 # --binary is required for Fiber's binary P2P protocol
 echo "Starting WebSocket proxy (binary mode)..."
-websocat --binary "ws-listen:${WS_PROXY_LISTEN}" "tcp:${WS_PROXY_TARGET}"
+websocat --binary -E "ws-listen:${WS_PROXY_LISTEN}" "tcp:${WS_PROXY_TARGET}"

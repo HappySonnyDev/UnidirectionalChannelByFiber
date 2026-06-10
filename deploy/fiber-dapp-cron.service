@@ -1,0 +1,14 @@
+[Unit]
+Description=Fiber DApp Cron Scheduler
+After=fiber-dapp-app.service
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/fiber-dapp/packages/webapp
+ExecStart=/usr/bin/env node scripts/cron-scheduler.js
+Environment=NODE_ENV=production
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

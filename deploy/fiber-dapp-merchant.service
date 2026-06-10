@@ -1,0 +1,13 @@
+[Unit]
+Description=Fiber DApp Merchant Node
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/fiber-dapp/merchant-node
+ExecStart=/opt/fiber-dapp/merchant-node/fnn -c config/merchant.yml -d data/merchant
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

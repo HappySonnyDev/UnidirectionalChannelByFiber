@@ -13,25 +13,14 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get user's active payment channel
-    const activeChannel = authService.getActivePaymentChannel(user.id);
-
-    const userData = {
-      id: user.id,
-      username: user.username,
-      created_at: user.created_at,
-      is_active: Boolean(user.is_active),
-      ckbAddress: user.public_key,
-      active_channel: activeChannel ? {
-        channelId: activeChannel.channel_id,
-        fundingAmount: activeChannel.funding_amount,
-        userAddress: activeChannel.user_address,
-        status: activeChannel.status
-      } : null
-    };
-
     return NextResponse.json({
-      user: userData
+      user: {
+        id: user.id,
+        username: user.username,
+        public_key: user.public_key,
+        is_active: Boolean(user.is_active),
+        created_at: user.created_at,
+      }
     });
 
   } catch {

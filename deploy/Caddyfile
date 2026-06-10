@@ -1,0 +1,16 @@
+dapp.54-180-28-237.sslip.io {
+    # Next.js 前端
+    reverse_proxy localhost:3100
+
+    # WebSocket 代理路径
+    @ws {
+        path /ws
+    }
+    reverse_proxy @ws localhost:18431
+
+    # SharedArrayBuffer 所需头
+    header {
+        Cross-Origin-Opener-Policy "same-origin"
+        Cross-Origin-Embedder-Policy "require-corp"
+    }
+}

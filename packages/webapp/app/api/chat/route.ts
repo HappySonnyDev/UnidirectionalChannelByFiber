@@ -26,6 +26,37 @@ const ollama = createOpenAICompatible({
 /** Number of text-delta events between each invoice request */
 const TOKENS_PER_CHUNK = 20;
 
+/** Call merchant node new_invoice RPC directly */
+async function createInvoice(chunkIndex: number, isTail = false) {
+  const rpcResponse = await fetch(FIBER_CONFIG.MERCHANT_NODE_RPC, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      jsonrpc: '2.0',
+      method: 'new_invoice',
+      params: [{
+        amount: '0x' + BigInt(FIBER_CONFIG.PAYMENT.CHUNK_PRICE_SHANNON).toString(16),
+        currency: FIBER_CONFIG.INVOICE_CURRENCY,
+        description: `AI chat ${isTail ? 'tail ' : ''}chunk #${chunkIndex}`,
+        expiry: '0x' + FIBER_CONFIG.PAYMENT.INVOICE_EXPIRY.toString(16),
+      }],
+      id: 1,
+    }),
+  });
+
+  const data = await rpcResponse.json();
+
+  if (data.error) {
+    throw new Error(data.error.message || 'Fiber node RPC error');
+  }
+
+  return {
+    invoice: data.result.invoice_address,
+    payment_hash: data.result.invoice?.data?.payment_hash,
+    amount: String(FIBER_CONFIG.PAYMENT.CHUNK_PRICE_SHANNON),
+  };
+}
+
 export async function POST(req: NextRequest) {
   try {
     // Check authentication via X-CKB-Address header
@@ -38,12 +69,6 @@ export async function POST(req: NextRequest) {
     }
 
     const { messages }: { messages: UIMessage[] } = await req.json();
-
-    // Generate a session ID for this conversation
-    const currentSessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-    // Base URL for internal API calls (invoice creation)
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 
     // Create the AI stream with invoice-based payment integration
     const stream = createUIMessageStream({
@@ -73,45 +98,55 @@ export async function POST(req: NextRequest) {
           if (tokenCount % TOKENS_PER_CHUNK === 0) {
             chunkIndex++;
             try {
-              const invoiceResponse = await fetch(`${baseUrl}/api/invoices/create`, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'X-CKB-Address': user.address,
+              const invoiceData = await createInvoice(chunkIndex);
+
+              writer.write({
+                type: 'data-invoice-request',
+                data: {
+                  invoice: invoiceData.invoice,
+                  payment_hash: invoiceData.payment_hash,
+                  amount: invoiceData.amount,
+                  chunkIndex,
                 },
-                body: JSON.stringify({
-                  amount: String(FIBER_CONFIG.PAYMENT.CHUNK_PRICE_SHANNON),
-                  description: `AI chat chunk #${chunkIndex}`,
-                  session_id: currentSessionId,
-                }),
-              });
-
-              const invoiceData = await invoiceResponse.json();
-
-              if (invoiceResponse.ok && invoiceData.success) {
-                // Send invoice-request event through the SSE stream
-                writer.write({
-                  type: 'data-invoice-request',
-                  data: {
-                    invoice: invoiceData.invoice,
-                    payment_hash: invoiceData.payment_hash,
-                    amount: String(FIBER_CONFIG.PAYMENT.CHUNK_PRICE_SHANNON),
-                    chunkIndex,
-                  },
-                } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
-              } else {
-                console.error(`[Chat] Invoice creation failed for chunk #${chunkIndex}:`, invoiceData.error);
-                writer.write({
-                  type: 'data-invoice-failed',
-                  data: {
-                    chunkIndex,
-                    error: invoiceData.error || 'Invoice creation failed',
-                  },
-                } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
-              }
+              } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
             } catch (err) {
-              console.error(`[Chat] Invoice request error for chunk #${chunkIndex}:`, err);
+              console.error(`[Chat] Invoice creation failed for chunk #${chunkIndex}:`, err);
+              writer.write({
+                type: 'data-invoice-failed',
+                data: {
+                  chunkIndex,
+                  error: err instanceof Error ? err.message : 'Invoice creation failed',
+                },
+              } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
             }
+          }
+        }
+
+        // Tail chunk billing: charge for remaining tokens after stream ends
+        const remainingTokens = tokenCount % TOKENS_PER_CHUNK;
+        if (remainingTokens > 0 && tokenCount > 0) {
+          chunkIndex++;
+          try {
+            const invoiceData = await createInvoice(chunkIndex, true);
+
+            writer.write({
+              type: 'data-invoice-request',
+              data: {
+                invoice: invoiceData.invoice,
+                payment_hash: invoiceData.payment_hash,
+                amount: invoiceData.amount,
+                chunkIndex,
+              },
+            } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+          } catch (err) {
+            console.error(`[Chat] Tail invoice creation failed for chunk #${chunkIndex}:`, err);
+            writer.write({
+              type: 'data-invoice-failed',
+              data: {
+                chunkIndex,
+                error: err instanceof Error ? err.message : 'Tail invoice creation failed',
+              },
+            } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
           }
         }
 
@@ -122,11 +157,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Create the response with session header
-    const response = createUIMessageStreamResponse({ stream });
-    response.headers.set('X-Session-ID', currentSessionId);
-
-    return response;
+    return createUIMessageStreamResponse({ stream });
 
   } catch (error) {
     console.error("Chat API error:", error);

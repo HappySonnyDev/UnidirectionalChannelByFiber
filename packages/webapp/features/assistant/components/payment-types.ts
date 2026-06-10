@@ -16,6 +16,8 @@ export interface PaymentRecord {
   amount: string;
   /** Payment status */
   status: 'pending' | 'paying' | 'confirmed' | 'failed';
+  /** Display sequence number in the UI list (computed, not from API) */
+  displayIndex?: number;
   /** ISO timestamp */
   timestamp: string;
   /** Error message if failed */
@@ -31,4 +33,8 @@ export interface PaymentChannelInfo {
   confirmedCount: number;
   /** Number of failed payments */
   failedCount: number;
+  /** ID of the currently active channel (first READY channel) */
+  activeChannelId?: string | null;
+  /** Balance of the active channel in human-readable format */
+  activeChannelBalance?: string;
 }

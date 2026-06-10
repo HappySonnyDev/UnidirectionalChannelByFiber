@@ -77,7 +77,8 @@ async function pollPaymentStatus(
  *
  * Flow:
  * 1. Call `fiberNode.sendPayment(invoice)` — WASM node routes payment through Fiber channel
- * 2. On success, call `/api/invoices/[payment_hash]/confirm` to notify the server
+ * 2. On success, update local payment status
+ *    (server-side invoice confirmation route has been removed)
  * 3. Return the payment status
  */
 export async function processInvoicePayment(
@@ -99,13 +100,7 @@ export async function processInvoicePayment(
     // "Created" and "Inflight" are non-terminal; we poll for the final result.
 
     if (result.status === 'Success') {
-      // Payment succeeded immediately — confirm on server
-      await fetch(`/api/invoices/${event.payment_hash}/confirm`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ payment_hash: event.payment_hash }),
-      });
-
+      // Payment succeeded immediately — update local state
       return {
         chunkIndex: event.chunkIndex,
         status: 'confirmed',
@@ -121,13 +116,7 @@ export async function processInvoicePayment(
       const finalResult = await pollPaymentStatus(fiberNode, paymentHash);
 
       if (finalResult.status === 'Success') {
-        // Payment eventually succeeded — confirm on server
-        await fetch(`/api/invoices/${event.payment_hash}/confirm`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ payment_hash: event.payment_hash }),
-        });
-
+        // Payment eventually succeeded — update local state
         return {
           chunkIndex: event.chunkIndex,
           status: 'confirmed',
@@ -198,5 +187,5 @@ export function hasInsufficientBalance(
  */
 export function shannonToCkbDisplay(shannon: string): string {
   const value = Number(BigInt(shannon || '0')) / Number(SHANNON_PER_CKB);
-  return `${value.toFixed(6)} CKB`;
+  return `${value.toFixed(2)} CKB`;
 }

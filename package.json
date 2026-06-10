@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "pnpm --filter webapp dev",
+    "dev": "OLLAMA_HOST=0.0.0.0:11434 ollama serve & pnpm --filter webapp dev",
     "build": "pnpm -r build",
     "build:webapp": "pnpm --filter webapp build",
     "build:contracts": "pnpm --filter contracts build",

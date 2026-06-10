@@ -22,6 +22,7 @@ export function AuthDialog({
   onOpenChange,
 }: AuthDialogProps) {
   const [internalOpen, setInternalOpen] = useState(false);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
 
   // Use controlled or internal open state
   const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
@@ -32,16 +33,30 @@ export function AuthDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(newOpen) => {
+        if (!newOpen && isAuthenticating) return;
+        setOpen(newOpen);
+      }}
+    >
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-      <DialogContent className="sm:max-w-md">
+      <DialogContent
+        className="sm:max-w-md"
+        onInteractOutside={(e) => {
+          if (isAuthenticating) e.preventDefault();
+        }}
+        onEscapeKeyDown={(e) => {
+          if (isAuthenticating) e.preventDefault();
+        }}
+      >
         <DialogHeader>
           <DialogTitle>Welcome</DialogTitle>
         </DialogHeader>
 
         {/* Form Content */}
         <div className="mt-6 space-y-4">
-          <LoginForm onSuccess={handleSuccess} />
+          <LoginForm onSuccess={handleSuccess} onLoadingChange={setIsAuthenticating} />
         </div>
 
         {/* Info Message */}

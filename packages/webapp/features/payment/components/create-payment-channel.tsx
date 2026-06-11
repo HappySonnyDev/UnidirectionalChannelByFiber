@@ -173,7 +173,8 @@ export const CreatePaymentChannel: React.FC<CreatePaymentChannelProps> = ({
         </p>
       </div>
 
-      {/* Address & Faucet - always visible */}
+      {/* Address & Faucet - hidden when insufficient balance (shown in warning instead) */}
+      {!isInsufficientBalance && (
       <div className="mb-6 rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
         <p className="text-sm text-slate-600 dark:text-slate-400">
           Your CKB deposit address:
@@ -206,6 +207,7 @@ export const CreatePaymentChannel: React.FC<CreatePaymentChannelProps> = ({
           <ExternalLink className="h-3.5 w-3.5" />
         </a>
       </div>
+      )}
 
       {/* Insufficient balance warning */}
       {isInsufficientBalance && (
@@ -228,6 +230,25 @@ export const CreatePaymentChannel: React.FC<CreatePaymentChannelProps> = ({
                 </a>
                 {' '}to continue.
               </p>
+              {fiberNode.ckbAddress && (
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="text-xs text-amber-700 dark:text-amber-400">Deposit to:</span>
+                  <code className="max-w-[260px] truncate rounded bg-amber-100 px-2 py-0.5 text-xs text-amber-900 dark:bg-amber-900/40 dark:text-amber-200">
+                    {fiberNode.ckbAddress}
+                  </code>
+                  <button
+                    type="button"
+                    onClick={() => copyAddress(fiberNode.ckbAddress!)}
+                    className="inline-flex items-center rounded px-1 py-0.5 text-xs text-amber-700 hover:bg-amber-100 dark:text-amber-400 dark:hover:bg-amber-900/40"
+                  >
+                    {copied ? (
+                      <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                    ) : (
+                      <Copy className="h-3.5 w-3.5" />
+                    )}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>

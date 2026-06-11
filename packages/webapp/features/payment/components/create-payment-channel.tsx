@@ -63,7 +63,7 @@ export const CreatePaymentChannel: React.FC<CreatePaymentChannelProps> = ({
 
   // Parse on-chain balance for insufficient-funds check
   const onChainCkb = parseFloat(fiberNode.onChainBalance) || 0;
-  const isInsufficientBalance = onChainCkb < MIN_FUNDING_CKB;
+  const isInsufficientBalance = onChainCkb < selectedAmount;
 
   const copyAddress = async (text: string) => {
     try {
@@ -132,6 +132,7 @@ export const CreatePaymentChannel: React.FC<CreatePaymentChannelProps> = ({
     isCreating ||
     !fiberNode.isConnected ||
     fundingAmount < MIN_FUNDING_CKB ||
+    isInsufficientBalance ||
     isNaN(fundingAmount);
 
   return (
@@ -211,9 +212,23 @@ export const CreatePaymentChannel: React.FC<CreatePaymentChannelProps> = ({
         <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-900/50 dark:bg-amber-900/20">
           <div className="flex items-start gap-2">
             <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-600 dark:text-amber-400" />
-            <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
-              Insufficient on-chain balance to open channel
-            </p>
+            <div className="text-sm text-amber-800 dark:text-amber-300">
+              <p className="font-medium">
+                Insufficient on-chain balance to open a {selectedAmount} CKB channel
+              </p>
+              <p className="mt-1">
+                Current balance: {fiberNode.onChainBalance}. Please{' '}
+                <a
+                  href="https://faucet.nervos.org/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium underline hover:text-amber-900 dark:hover:text-amber-200"
+                >
+                  get test tokens via Nervos Faucet
+                </a>
+                {' '}to continue.
+              </p>
+            </div>
           </div>
         </div>
       )}

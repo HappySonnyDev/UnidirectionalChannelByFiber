@@ -126,6 +126,7 @@ export interface UseFiberNodeResult {
   getPayment: (paymentHash: string) => Promise<GetPaymentResult>;
   waitForPayment: (paymentHash: string, options?: { timeout?: number; interval?: number }) => Promise<GetPaymentResult>;
   refreshChannels: () => Promise<ListChannelsResult['channels']>;
+  refreshOnChainBalance: () => Promise<void>;
   setActiveChannelById: (channelId: string) => void;
 
   // Low-level ref for advanced usage
@@ -195,6 +196,18 @@ export function useFiberNode({
     },
     [],
   );
+
+  // -- Refresh on-chain balance only (lightweight) --------------------------
+  const refreshOnChainBalance = useCallback(async () => {
+    const addr = ckbAddress;
+    if (!addr) return;
+    try {
+      const capacity = await queryCkbBalance(addr, sdkNetwork);
+      setOnChainBalance(shannonToCkb(capacity));
+    } catch (err) {
+      console.error('[useFiberNode] refreshOnChainBalance failed:', err);
+    }
+  }, [ckbAddress, sdkNetwork]);
 
   // -- Refresh (node info + channels + on-chain balance) --------------------
   const refreshChannels = useCallback(async () => {
@@ -460,6 +473,17 @@ export function useFiberNode({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoConnect]);
 
+  // -- Auto-poll on-chain balance every 30s --------------------------------
+  useEffect(() => {
+    if (!isNodeReady || !ckbAddress) return;
+
+    const timer = setInterval(() => {
+      refreshOnChainBalance();
+    }, 30_000);
+
+    return () => clearInterval(timer);
+  }, [isNodeReady, ckbAddress, refreshOnChainBalance]);
+
   // -- Cleanup on unmount ---------------------------------------------------
   useEffect(() => {
     return () => {
@@ -499,6 +523,7 @@ export function useFiberNode({
     getPayment,
     waitForPayment,
     refreshChannels,
+    refreshOnChainBalance,
     setActiveChannelById,
     browserNodeRef,
   };

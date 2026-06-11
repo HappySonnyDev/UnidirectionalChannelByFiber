@@ -1,11 +1,23 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useAuth } from "@/features/auth/components/auth-context";
 import { InfoCard } from "@/components/shared/info-card";
+import { RefreshCw } from "lucide-react";
 
 export const ProfileSettings: React.FC = () => {
   const { user, ckbAddress, fiberNode } = useAuth();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefreshBalance = async () => {
+    if (isRefreshing) return;
+    setIsRefreshing(true);
+    try {
+      await fiberNode.refreshOnChainBalance();
+    } finally {
+      setTimeout(() => setIsRefreshing(false), 1000);
+    }
+  };
 
   return (
     <div className="w-full max-w-none h-[600px] overflow-y-scroll p-8">
@@ -62,7 +74,19 @@ export const ProfileSettings: React.FC = () => {
               },
               {
                 label: "Balance",
-                value: fiberNode.onChainBalance || "0",
+                value: (
+                  <span className="inline-flex items-center gap-1.5">
+                    {fiberNode.onChainBalance || "0"}
+                    <button
+                      type="button"
+                      onClick={handleRefreshBalance}
+                      title="Test tokens may take 3-5 minutes to arrive"
+                      className="cursor-pointer inline-flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                    >
+                      <RefreshCw className={`h-3 w-3 ${isRefreshing ? 'animate-spin' : ''}`} />
+                    </button>
+                  </span>
+                ),
                 className: "font-semibold"
               }
             ]}

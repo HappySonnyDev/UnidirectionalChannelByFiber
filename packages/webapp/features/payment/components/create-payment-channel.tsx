@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/components/auth-context";
-import { Loader2, AlertCircle, CheckCircle2, Copy, ExternalLink } from "lucide-react";
+import { Loader2, AlertCircle, CheckCircle2, Copy, ExternalLink, RefreshCw } from "lucide-react";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -57,6 +57,7 @@ export const CreatePaymentChannel: React.FC<CreatePaymentChannelProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const fundingAmount = selectedAmount;
   const availableCkb = fundingAmount - CHANNEL_RESERVE_CKB;
@@ -64,6 +65,16 @@ export const CreatePaymentChannel: React.FC<CreatePaymentChannelProps> = ({
   // Parse on-chain balance for insufficient-funds check
   const onChainCkb = parseFloat(fiberNode.onChainBalance) || 0;
   const isInsufficientBalance = onChainCkb < selectedAmount;
+
+  const handleRefreshBalance = async () => {
+    if (isRefreshing) return;
+    setIsRefreshing(true);
+    try {
+      await fiberNode.refreshOnChainBalance();
+    } finally {
+      setTimeout(() => setIsRefreshing(false), 1000);
+    }
+  };
 
   const copyAddress = async (text: string) => {
     try {
@@ -168,8 +179,16 @@ export const CreatePaymentChannel: React.FC<CreatePaymentChannelProps> = ({
             {availableCkb > 0 ? availableCkb.toFixed(2) : "0.00"} CKB
           </span>
         </p>
-        <p className="mt-1 text-xs text-slate-500 dark:text-slate-500">
-          Current on-chain balance: {fiberNode.onChainBalance}
+        <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-500">
+          <span>Current on-chain balance: {fiberNode.onChainBalance}</span>
+          <button
+            type="button"
+            onClick={handleRefreshBalance}
+            title="Test tokens may take 3-5 minutes to arrive"
+            className="cursor-pointer inline-flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+          >
+            <RefreshCw className={`h-3 w-3 ${isRefreshing ? 'animate-spin' : ''}`} />
+          </button>
         </p>
       </div>
 
@@ -187,7 +206,7 @@ export const CreatePaymentChannel: React.FC<CreatePaymentChannelProps> = ({
             <button
               type="button"
               onClick={() => copyAddress(fiberNode.ckbAddress!)}
-              className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+              className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 cursor-pointer"
             >
               {copied ? (
                 <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
@@ -239,7 +258,7 @@ export const CreatePaymentChannel: React.FC<CreatePaymentChannelProps> = ({
                   <button
                     type="button"
                     onClick={() => copyAddress(fiberNode.ckbAddress!)}
-                    className="inline-flex items-center rounded px-1 py-0.5 text-xs text-amber-700 hover:bg-amber-100 dark:text-amber-400 dark:hover:bg-amber-900/40"
+                    className="inline-flex items-center rounded px-1 py-0.5 text-xs text-amber-700 hover:bg-amber-100 dark:text-amber-400 dark:hover:bg-amber-900/40 cursor-pointer"
                   >
                     {copied ? (
                       <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />

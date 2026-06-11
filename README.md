@@ -1,456 +1,229 @@
-# CKB Spilman Payment Channel - AI Assistant Demo
+# Fiber DApp - AI Micropayment Demo
 
-[中文文档](./README_CN.md) | English
+基于 Nervos CKB 区块链 **Fiber 单向支付通道**的 AI 对话微支付演示应用。用户通过浏览器内 WASM 轻节点与商家 Fiber 节点直连，实现按数据块（chunk）实时、高频的链下微支付。
 
-A demonstration application showcasing Spilman unidirectional payment channels on CKB (Nervos) blockchain, integrated with AI chat assistant for real-time chunk-level micropayments.
+## 核心特性
 
-## 🏛️ Monorepo Architecture
+- **Fiber 单向支付通道** — 基于 Spilman 协议的链下微支付
+- **WASM 浏览器节点** — 用户私钥仅存本地，支付签名全部在客户端完成
+- **AI 流式分块计费** — 每 20 token 为 1 chunk（0.5 CKB），边生成边付费
+- **Passkey 认证** — WebAuthn 无密码登录，公钥签名验证身份
+- **WebSocket 直连** — 浏览器 WASM 节点通过 WS 代理直连商家 P2P 端口
 
-This project is organized as a **pnpm workspace monorepo** with the following packages:
+## 架构概览
 
 ```
-dapp_2/
+┌─────────────────────────────────────────────────────────────────┐
+│  Browser (WASM Fiber Node)                                      │
+│  ┌──────────┐  ┌──────────────┐  ┌───────────────────────────┐ │
+│  │ Passkey  │  │ AI Chat UI   │  │ Payment Channel (签名/计费)│ │
+│  └──────────┘  └──────────────┘  └───────────────────────────┘ │
+└──────────┬──────────────┬────────────────────┬──────────────────┘
+           │ HTTPS        │ HTTPS              │ WebSocket
+           ▼              ▼                    ▼
+┌──────────────────────────────────┐   ┌──────────────────┐
+│  Next.js App (Port 3100)         │   │  WS Proxy        │
+│  ┌────────┐ ┌──────┐ ┌───────┐  │   │  (Port 18431)    │
+│  │ Auth   │ │ Chat │ │Invoice│  │   └────────┬─────────┘
+│  │ API    │ │ API  │ │ API   │  │            │ TCP
+│  └────────┘ └──────┘ └───────┘  │            ▼
+│  ┌─────────────────────────────┐ │   ┌──────────────────┐
+│  │  SQLite  │  node-cron       │ │   │  Merchant Node   │
+│  └─────────────────────────────┘ │   │  (fnn binary)    │
+└──────────────────────────────────┘   │  RPC: 8427       │
+                                       │  P2P:  8428      │
+                                       └────────┬─────────┘
+                                                │
+                                                ▼
+                                       ┌──────────────────┐
+                                       │  CKB Testnet     │
+                                       └──────────────────┘
+```
+
+## 项目结构
+
+```
+dapp_2_local/
 ├── packages/
-│   ├── webapp/              # Next.js web application
-│   ├── contracts/           # CKB smart contracts (2of2 multi-sig)
-│   └── shared/              # Shared utilities and types
-├── pnpm-workspace.yaml      # Workspace configuration
-├── package.json             # Root package with workspace scripts
-└── tsconfig.json            # Root TypeScript configuration
+│   ├── webapp/           # Next.js 全栈应用（前端 + API + DB）
+│   └── shared/           # 跨包共享的类型定义与工具函数
+├── merchant-node/        # Fiber 商家节点（独立部署）
+├── deploy/               # 生产部署配置（systemd + Caddy）
+├── scripts/              # 根级工具脚本
+├── pnpm-workspace.yaml   # pnpm Monorepo 配置
+└── package.json          # 根级脚本入口
 ```
 
-### Package Overview
+### packages/webapp
 
-- **`packages/webapp`**: Next.js-based web application with AI chat and payment channel UI
-- **`packages/contracts`**: CKB JavaScript smart contracts for 2-of-2 multi-signature payment channels
-- **`packages/shared`**: Shared TypeScript utilities and type definitions used across packages
+全栈 Web 应用，包含用户界面、API 服务和数据管理。
 
-### Workspace Commands
+| 技术 | 用途 |
+|------|------|
+| Next.js 15.5 (App Router) | 前端框架 + API Routes |
+| Radix UI + Tailwind CSS 4.0 | UI 组件库 |
+| AI SDK + assistant-ui | AI 聊天集成 |
+| Zustand | 客户端状态管理 |
+| better-sqlite3 | 本地数据库 |
+| @fiber-pay/sdk + fiber-js | Fiber 支付协议 |
+| node-cron | 定时自动结算 |
+
+### packages/shared
+
+跨包共享的 TypeScript 类型定义、CKB 工具函数和部署配置。
+
+### merchant-node
+
+Fiber 商家节点的独立运行环境，包含 `fnn` 二进制、配置文件和启动脚本。详见 [merchant-node/README.md](./merchant-node/README.md)。
+
+## 快速开始
+
+### 前置要求
+
+- Node.js 22+
+- pnpm 10+
+- [Ollama](https://ollama.ai/)（本地 AI 模型服务）
+
+### 本地开发
 
 ```bash
-# Run commands in all packages
-pnpm -r <command>
+# 1. 安装依赖
+pnpm install
 
-# Run commands in specific package
-pnpm --filter webapp <command>
-pnpm --filter contracts <command>
-pnpm --filter shared <command>
+# 2. 配置环境变量
+cp packages/webapp/.env.example packages/webapp/.env.local
+# 编辑 .env.local 填入必要配置（见下方环境变量说明）
 
-# Examples:
-pnpm --filter webapp dev          # Start webapp dev server
-pnpm --filter contracts build     # Build contracts
-pnpm --filter contracts test      # Run contract tests
-pnpm build                        # Build all packages
+# 3. 启动 Ollama
+ollama serve
+ollama pull qwen2.5:0.5b
+
+# 4. 启动 Merchant 节点（另一个终端）
+cd merchant-node
+./download-fnn.sh          # 首次：下载 fnn 二进制
+cp .env.example .env       # 配置环境变量
+./start-merchant.sh        # 启动节点
+./start-ws-proxy.sh        # 启动 WS 代理
+
+# 5. 启动开发服务器
+pnpm dev                   # http://localhost:3000
 ```
 
-## 📋 Project Overview
+### 常用命令
 
-This is an innovative decentralized application (DApp) that demonstrates how to implement micropayments in AI conversation scenarios using CKB blockchain's Spilman payment channels. Users can create payment channels, chat with AI assistants, and make real-time payments for each data chunk received from AI responses, showcasing the characteristics of small amounts and high frequency transactions.
+| 命令 | 说明 |
+|------|------|
+| `pnpm dev` | 启动开发服务器 |
+| `pnpm build` | 构建所有包 |
+| `pnpm build:webapp` | 仅构建 webapp |
+| `pnpm lint` | ESLint 检查 |
+| `pnpm prettier:fix` | 代码格式化 |
+| `pnpm clear-tables` | 清空数据库 |
+| `pnpm cron-auto-settle` | 手动执行自动结算 |
 
-### Core Features
+## 环境变量
 
-- 🔐 **Wallet Authentication**: Secure authentication system based on CKB private keys
-- 💰 **Payment Channel Management**: Create, activate, and settle Spilman unidirectional payment channels
-- 🤖 **AI Chat Assistant**: Intelligent conversation system integrated with OpenAI API
-- 📊 **Chunk-level Payment**: Real-time tracking and payment for each AI response data chunk
-- ⚡ **Auto Payment**: Support for both automatic and manual payment modes
-- 🔄 **Real-time Updates**: Real-time synchronization of payment status and balance
-- 📈 **Admin Dashboard**: Complete management system for users, channels, and scheduled tasks
-- ⏰ **Scheduled Tasks**: Automatic settlement of payment channels nearing expiration
-
-## 🏗️ Tech Stack
-
-### Frontend
-- **Framework**: Next.js 15.5.2 (App Router)
-- **UI Components**: 
-  - Radix UI - Accessible component library
-  - Tailwind CSS 4.0 - Atomic CSS
-  - Lucide React - Icon library
-- **AI Assistant**: 
-  - assistant-ui - AI conversation interface components
-  - AI SDK - Streaming response handling
-- **State Management**: Zustand
-- **Date Processing**: Day.js (with timezone support)
-
-### Backend
-- **Runtime**: Next.js API Routes (Edge Runtime)
-- **Database**: Better-SQLite3 (Local SQLite)
-- **Authentication**: JWT (jose)
-- **Scheduled Tasks**: node-cron
-- **Encryption**: bcryptjs
-
-### Blockchain
-- **Network**: CKB Devnet (Testnet)
-- **SDK**: @ckb-ccc/core v1.12.1
-- **Cryptographic Algorithm**: @noble/curves (secp256k1)
-- **Payment Protocol**: Spilman Unidirectional Payment Channel
-
-## 📁 Project Structure
-
-### Monorepo Layout
-
-```
-dapp_2/                           # Monorepo root
-├── packages/
-│   ├── webapp/                   # Next.js web application
-│   │   ├── app/                  # Next.js App Router
-│   │   │   ├── admin/           # Admin dashboard
-│   │   │   │   ├── channels/    # Payment channel management
-│   │   │   │   ├── tasks/       # Scheduled task management
-│   │   │   │   └── users/       # User management
-│   │   │   ├── api/             # API routes
-│   │   │   │   ├── admin/       # Admin APIs
-│   │   │   │   ├── auth/        # Authentication APIs
-│   │   │   │   ├── channel/     # Payment channel APIs
-│   │   │   │   ├── chat/        # AI chat APIs
-│   │   │   │   └── chunks/      # Chunk-level payment APIs
-│   │   │   ├── assistant.tsx    # AI assistant main page
-│   │   │   └── page.tsx         # Home page
-│   │   ├── components/          # Reusable components
-│   │   │   ├── shared/          # Shared business components
-│   │   │   └── ui/              # UI base components
-│   │   ├── features/            # Feature modules
-│   │   │   ├── admin/           # Admin features
-│   │   │   ├── assistant/       # AI assistant features
-│   │   │   ├── auth/            # Authentication features
-│   │   │   ├── payment/         # Payment features
-│   │   │   └── settings/        # Settings features
-│   │   ├── lib/                 # Utility libraries
-│   │   │   ├── client/          # Client-side utilities
-│   │   │   ├── server/          # Server-side utilities
-│   │   │   └── shared/          # Shared utilities
-│   │   ├── scripts/             # Script files
-│   │   └── package.json         # Webapp dependencies
-│   ├── contracts/               # CKB Smart Contracts
-│   │   ├── contracts/2of2/      # 2-of-2 multi-sig contract
-│   │   │   └── src/index.ts     # Contract source code
-│   │   ├── tests/               # Contract tests
-│   │   ├── scripts/             # Build and deploy scripts
-│   │   ├── deployment/          # Deployment configurations
-│   │   └── package.json         # Contract dependencies
-│   └── shared/                  # Shared Package
-│       ├── src/
-│       │   ├── types.ts         # Shared type definitions
-│       │   ├── utils.ts         # Shared utility functions
-│       │   └── index.ts         # Package exports
-│       └── package.json         # Shared dependencies
-├── pnpm-workspace.yaml          # Workspace configuration
-├── package.json                 # Root package (workspace scripts)
-└── tsconfig.json                # Root TypeScript config
-```
-
-## 🚀 Quick Start
-
-### Requirements
-
-- Node.js 22.19 or higher
-- pnpm (recommended) or npm/yarn
-- CKB Devnet environment (started with offckb) - see installation step 3
-
-### Installation Steps
-
-1. **Clone the project**
-   ```bash
-   git clone <repository-url>
-   cd dapp_2
-   ```
-
-2. **Install dependencies**
-   ```bash
-   pnpm install
-   # or
-   npm install
-   ```
-
-3. **Start CKB Devnet Node**
-   ```bash
-   # Use offckb to start local CKB development network
-   offckb node
-   ```
-   
-   > **Note**: Make sure [offckb](https://github.com/RetricSu/offckb) is installed. If not, run:
-   > ```bash
-   > npm install -g @offckb/cli
-   > ```
-   > 
-   > The node runs on `http://localhost:28114` by default. Keep this terminal window running.
-
-4. **Configure environment variables**
-   
-   Create `.env.local` file in packages/webapp directory:
-   ```env
-   # Local Ollama Configuration
-   OLLAMA_BASE_URL=http://localhost:11434/v1
-   OLLAMA_MODEL=qwen2.5:0.5b
-   
-   # CKB Blockchain Configuration
-   SELLER_PRIVATE_KEY=0xxxxxxxxxxxxx     # Seller (server-side) private key
-   
-   # JWT Secret (for authentication)
-   JWT_SECRET=your-secret-key-here
-   
-
-5. **Initialize database**
-   
-   The database will be created automatically on first run. 
-   
-   > **Note for Apple Silicon (M1/M2/M3/M4) users with Node.js 22+**:
-   > 
-   > If you encounter the error "Could not locate the bindings file" for better-sqlite3, you need to rebuild it from source:
-   > 
-   > ```bash
-   > # Navigate to better-sqlite3 package directory
-   > cd node_modules/.pnpm/better-sqlite3@12.4.1/node_modules/better-sqlite3
-   > 
-   > # Ensure build tools are available
-   > xcode-select --install || true
-   > python3 --version
-   > 
-   > # Rebuild from source
-   > npm_config_python="$(command -v python3)" \
-   > npm_config_build_from_source=true \
-   > npx node-gyp rebuild
-   > 
-   > # Return to project root
-   > cd -
-   > ```
-   > 
-   > This issue occurs because prebuilt binaries are not available for the Node.js 22 + ARM64 combination.
-
-6. **Start development server**
-   ```bash
-   pnpm dev
-   
-   ```
-   
-   **Additional commands**:
-   ```bash
-   # Build all packages
-   pnpm build
-   
-   # Build contracts only
-   pnpm build:contracts
-   
-   # Test contracts
-   pnpm test:contracts
-   
-   # Deploy contracts to devnet
-   pnpm deploy:contracts
-   ```
-
-7. **Access the application**
-   
-   Open [http://localhost:3000](http://localhost:3000) in your browser
-
-## 💡 User Guide
-
-### 1. User Login
-
-- Enter your CKB private key in the login form on the main page
-- Click "Login" to complete login
-
-> **Security Notice**: 
-> - 🔒 **We never send your private key to the server** - private keys are processed locally on the client only
-> - 🔑 Only the public key derived from your private key is sent to the server for identity verification
-> - 💾 **For demonstration purposes**: Private keys are stored in browser's localStorage
-> - 🚫 **Do not use this storage method in production environments**
->
-> **Get test accounts**:
-> ```bash
-> # View available test accounts (requires offckb node to be running)
-> offckb accounts
-> ```
-> Choose a private key from one of the accounts for testing.
-
-### 2. Create Payment Channel
-
-- After successful authentication, go to "Payment Channels" tab
-- Click "Create New Channel"
-- Set channel parameters:
-  - **Amount**: Funding amount (CKB)
-  - **Duration**: Channel validity period (days)
-- Click "Create Channel" to create the channel
-- Wait for on-chain confirmation, then channel status becomes "Active"
-
-### 3. Activate Payment Channel
-
-- In the payment channel list, click "Confirm Funding"
-- The system will automatically submit funding transaction to CKB network
-- After confirmation, channel becomes "Active" status
-- Set as default channel to start using
-
-### 4. Chat with AI and Pay
-
-- Return to the main page and start chatting with AI assistant
-- Enable "Auto Pay" switch for automatic payment
-- Each AI response generates data chunks
-- Payment status panel shows:
-  - Current consumed Tokens
-  - Remaining Tokens
-  - Payment record list
-- View transaction details for each payment
-
-### 5. Settle Payment Channel
-
-- In Payment Channels, select the channel to settle
-- Click "Settle Channel"
-- The system will submit the last payment transaction to the blockchain
-- After successful settlement, remaining funds are returned to the buyer's address
-
-> **Note**: For demonstration, we added settlement functionality on the client side. In practice, the server also runs a scheduled task that automatically settles channels nearing expiration.
-
-## 🔧 Admin Features
-
-Visit [http://localhost:3000/admin](http://localhost:3000/admin) to access the admin dashboard (requires admin privileges)
-
-### Feature Modules
-
-- **User Management**: View all users, disable/enable users
-- **Payment Channel Management**: View all channels, force settlement, modify status
-- **Scheduled Task Management**: 
-  - Auto-settle channels expiring within 15 minutes
-  - Check and mark expired channels (mainly to allow client UI to withdraw deposits; even without this scheduled task, you can still extract deposits using transaction data after expiration)
-  - View task execution logs
-
-## 📊 Database Structure
-
-### Main Tables
-
-1. **users** - User table
-   - Stores user information, public keys, associated addresses
-
-2. **payment_channels** - Payment channel table
-   - Channel ID, amount, status, timestamps
-   - Signature data, transaction data
-
-3. **chunk_payments** - Chunk-level payment records
-   - Chunk ID, token count, payment status
-   - Transaction data, buyer signatures
-
-4. **task_logs** - Scheduled task log table
-   - Task execution records, status, results
-
-## 🔐 Security Features
-
-- ✅ Private keys processed client-side only, never sent to server
-- ✅ JWT-based secure authentication
-- ✅ Payment channels protected by multi-signature scripts
-- ✅ All transactions require buyer and seller signatures
-- ✅ Relative time locks protect refund transactions
-
-## 🎯 Core Concepts
-
-### Spilman Payment Channel
-
-Spilman channel is a type of unidirectional payment channel that allows buyers to make multiple payments to sellers, but only requires final settlement on-chain once:
-
-1. **Creation Phase**: 
-   - Buyer creates funding transaction to lock funds
-   - Seller signs refund transaction (with timelock)
-   
-2. **Payment Phase**:
-   - Buyer signs new payment transactions to update allocation
-   - Seller holds the latest payment transaction
-   
-3. **Settlement Phase**:
-   - Seller submits the last payment transaction to blockchain
-   - Or buyer can refund after timeout
-
-### Chunk-level Payment Flow
-
-1. User sends message to AI assistant
-2. AI starts streaming response data
-3. When each data chunk arrives:
-   - Calculate chunk token count
-   - Calculate cumulative payment amount
-   - Construct and sign payment transaction
-   - Send to server for verification
-4. Server validates signature and stores
-5. Frontend updates payment status
-
-## 🛠️ Development Commands
+### Webapp (`packages/webapp/.env.local`)
 
 ```bash
-# Development
-pnpm dev              # Start development server
+# AI 模型（Ollama 本地）
+OLLAMA_BASE_URL=http://localhost:11434/v1
+OLLAMA_MODEL=qwen2.5:0.5b
 
-# Build
-pnpm build            # Production build
-pnpm start            # Start production server
+# Fiber 商家节点（服务端调用）
+FIBER_MERCHANT_RPC=http://127.0.0.1:8227
 
-# Code Quality
-pnpm lint             # ESLint check
-pnpm prettier         # Prettier format check
-pnpm prettier:fix     # Auto format
+# Fiber 配置（客户端 - 必须使用 NEXT_PUBLIC_ 前缀）
+NEXT_PUBLIC_FIBER_MERCHANT_PUBKEY=0x...
+NEXT_PUBLIC_FIBER_MERCHANT_MULTIADDR=/ip4/127.0.0.1/tcp/8228/ws
+NEXT_PUBLIC_FIBER_NETWORK=testnet
 
-# Database Management
-pnpm clear-channels   # Clear payment channels
-pnpm clear-tables     # Clear all tables
+# 认证
+JWT_SECRET=your-secret-key
 
-# Scheduled Tasks
-pnpm cron-auto-settle # Run auto-settlement task
-pnpm cron-scheduler   # Run scheduled task scheduler
+# 代理配置（防止本地请求被全局代理拦截）
+NO_PROXY=localhost,127.0.0.1
 ```
 
-## 📝 Environment Variables
+### Merchant Node (`merchant-node/.env`)
 
-| Variable | Description | Required | Example |
-|----------|-------------|----------|----------|
-| `OPENAI_API_KEY` | OpenAI API key | Yes | `sk-xxx...` |
-| `SELLER_PRIVATE_KEY` | Seller private key | Yes | `0x...` |
-| `JWT_SECRET` | JWT signing secret | Yes | `your-secret` |
+```bash
+MERCHANT_PRIVATE_KEY=<64-char-hex>
+CKB_RPC_URL=https://testnet.ckbapp.dev/
+FIBER_P2P_PORT=8428
+FIBER_RPC_PORT=8427
+FIBER_WS_PORT=8431
+```
 
-## 🐛 Troubleshooting
+> **重要**: `NEXT_PUBLIC_*` 前缀的变量会注入到浏览器客户端，不带前缀的变量仅在服务端可用。
 
-### Common Issues
+## 生产部署
 
-**Q: Wallet connection failed**
-- Check if private key format is correct (needs 0x prefix)
-- Ensure the private key's corresponding address has sufficient CKB balance
+项目通过 systemd 服务部署在 VPS 上，使用 Caddy 作为反向代理。
 
-**Q: Payment channel creation failed**
-- Check if CKB node is running properly
-- Verify seller private key and address configuration
-- Check browser console and server logs
+### 服务架构
 
-**Q: AI chat no response**
-- Check if OPENAI_API_KEY is configured correctly
-- Ensure network connection is stable
-- Check if API quota is exhausted
+| 服务 | 用途 | 端口 |
+|------|------|------|
+| `fiber-dapp-merchant` | Fiber 商家节点 | 8427 (RPC) / 8428 (P2P) |
+| `fiber-dapp-ws-proxy` | WebSocket 代理 | 18431 |
+| `fiber-dapp-app` | Next.js 应用 | 3100 |
+| `fiber-dapp-cron` | 定时任务（自动结算） | — |
 
-**Q: Scheduled tasks not executing**
-- Go to admin dashboard to check task status
-- Manually start tasks for testing
-- Review task execution logs
+### 一键部署
 
-## 🤝 Contributing
+```bash
+# 在 VPS 上执行
+cd deploy
+chmod +x setup.sh
+./setup.sh
+```
 
-Welcome to submit Issues and Pull Requests!
+`setup.sh` 会自动完成：安装依赖 → 构建项目 → 下载 fnn → 拉取 AI 模型 → 安装并启动 systemd 服务。
 
-1. Fork the project
-2. Create feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to branch (`git push origin feature/AmazingFeature`)
-5. Open Pull Request
+### Caddy 反向代理
 
-## 📄 License
+- HTTPS 自动证书
+- `/ws` 路径路由至 WebSocket 代理
+- COOP/COEP headers 启用 SharedArrayBuffer（WASM 多线程）
 
-This project is licensed under the MIT License.
+## 支付流程
 
-## 🙏 Acknowledgments
+```
+用户发送消息 → AI 流式响应 → 每 20 token = 1 chunk
+                                      ↓
+              前端计算金额 → WASM 节点签署支付交易
+                                      ↓
+              服务端验证签名 → 存储交易 → 更新余额面板
+                                      ↓
+              通道到期/用户请求 → node-cron 自动结算上链
+```
 
-- [CKB (Nervos Network)](https://nervos.org/) - Blockchain infrastructure
-- [assistant-ui](https://github.com/Yonom/assistant-ui) - AI conversation interface
-- [Next.js](https://nextjs.org/) - React framework
-- [Radix UI](https://www.radix-ui.com/) - UI component library
+**定价**: 50,000,000 shannon (0.5 CKB) / chunk
 
-## 📞 Contact
+## 常见问题
 
-For questions or suggestions, please contact:
+| 问题 | 解决方案 |
+|------|---------|
+| 本地 RPC 请求失败 | 设置 `NO_PROXY=localhost,127.0.0.1` |
+| WASM 节点无法加载 | 确认 COOP/COEP headers 已配置 |
+| 客户端读不到环境变量 | 使用 `NEXT_PUBLIC_` 前缀 |
+| Merchant multiaddr 连接失败 | 地址格式为 `/ip4/.../tcp/.../ws`，不含 `/p2p/` 后缀 |
+| better-sqlite3 编译失败 | 运行 `pnpm rebuild better-sqlite3` |
 
-- Submit GitHub Issues
-- Email: [happy.sonny.dev@gmail.com]
+## 技术栈总览
 
----
+| 层级 | 选型 |
+|------|------|
+| 前端框架 | Next.js 15.5 + React 19 |
+| UI | Radix UI + Tailwind CSS 4.0 |
+| AI | Vercel AI SDK + assistant-ui |
+| 状态管理 | Zustand |
+| 数据库 | better-sqlite3 (SQLite) |
+| 认证 | Passkey (WebAuthn) + JWT |
+| 区块链 | CKB Testnet + Fiber v0.8.1 |
+| 部署 | systemd + Caddy + websocat |
 
-**Note**: This project is for demonstration and learning purposes only. Please do not use unaudited code in production environments.
+## License
+
+Private

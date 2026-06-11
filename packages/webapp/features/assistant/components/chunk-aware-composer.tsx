@@ -90,7 +90,7 @@ export const ChunkAwareComposer: React.FC<ChunkAwareComposerProps> = ({
       setBalanceError(`Insufficient balance: ${fiberNode.availableBalance} available, need ${shannonToCkbDisplay(amount)}`);
       setPaymentRecords(prev =>
         prev.map(r =>
-          r.chunkIndex === chunkIndex
+          r.payment_hash === payment_hash
             ? { ...r, status: 'failed' as const, error: 'Insufficient balance' }
             : r
         )
@@ -104,7 +104,7 @@ export const ChunkAwareComposer: React.FC<ChunkAwareComposerProps> = ({
     // Mark as paying
     setPaymentRecords(prev =>
       prev.map(r =>
-        r.chunkIndex === chunkIndex
+        r.payment_hash === payment_hash
           ? { ...r, status: 'paying' as const }
           : r
       )
@@ -115,7 +115,7 @@ export const ChunkAwareComposer: React.FC<ChunkAwareComposerProps> = ({
 
       setPaymentRecords(prev =>
         prev.map(r =>
-          r.chunkIndex === chunkIndex
+          r.payment_hash === payment_hash
             ? { ...r, status: result.status, error: result.error }
             : r
         )
@@ -129,7 +129,7 @@ export const ChunkAwareComposer: React.FC<ChunkAwareComposerProps> = ({
     } catch (err) {
       setPaymentRecords(prev =>
         prev.map(r =>
-          r.chunkIndex === chunkIndex
+          r.payment_hash === payment_hash
             ? { ...r, status: 'failed' as const, error: err instanceof Error ? err.message : 'Unknown error' }
             : r
         )
@@ -224,7 +224,7 @@ export const ChunkAwareComposer: React.FC<ChunkAwareComposerProps> = ({
         // Just update local state.
         setPaymentRecords(prev =>
           prev.map(r =>
-            r.chunkIndex === record.chunkIndex
+            r.payment_hash === record.payment_hash
               ? { ...r, status: 'confirmed' as const, error: undefined }
               : r
           )
@@ -249,7 +249,7 @@ export const ChunkAwareComposer: React.FC<ChunkAwareComposerProps> = ({
         const error = invoiceData.error || 'Failed to create new invoice';
         setPaymentRecords(prev =>
           prev.map(r =>
-            r.chunkIndex === record.chunkIndex
+            r.payment_hash === record.payment_hash
               ? { ...r, error: `Retry failed: ${error}` }
               : r
           )
@@ -260,7 +260,7 @@ export const ChunkAwareComposer: React.FC<ChunkAwareComposerProps> = ({
       // 3. Update the record with the new invoice data and pay it
       setPaymentRecords(prev =>
         prev.map(r =>
-          r.chunkIndex === record.chunkIndex
+          r.payment_hash === record.payment_hash
             ? {
                 ...r,
                 invoice: invoiceData.invoice,
@@ -281,7 +281,7 @@ export const ChunkAwareComposer: React.FC<ChunkAwareComposerProps> = ({
     } catch (err) {
       setPaymentRecords(prev =>
         prev.map(r =>
-          r.chunkIndex === record.chunkIndex
+          r.payment_hash === record.payment_hash
             ? { ...r, error: `Retry error: ${err instanceof Error ? err.message : 'Unknown'}` }
             : r
         )
